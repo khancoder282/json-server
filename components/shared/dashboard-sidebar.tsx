@@ -2,6 +2,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { motion } from "motion/react"
 import { cn } from "@/lib/utils"
 import { Logo } from "./logo"
 import { Database, Key, LayoutDashboard, ScrollText, Settings } from "lucide-react"
@@ -21,29 +22,39 @@ export function DashboardSidebar() {
 
   return (
     <aside className="hidden md:flex md:flex-col md:w-56 md:shrink-0 border-r bg-background h-full min-h-screen">
-      <div className="p-4">
+      <div className="px-6 py-4.5">
         <Logo />
       </div>
       <nav className="flex flex-col gap-1 p-3">
         <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
           Menu
         </p>
-        {nav.map(({ label, href, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              "flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-              pathname === href ||
-                (href !== "/dashboard" && pathname.startsWith(href))
-                ? "bg-muted text-foreground"
-                : "text-foreground/50 hover:text-foreground hover:bg-muted/50",
-            )}
-          >
-            <Icon className="size-4 shrink-0" />
-            {label}
-          </Link>
-        ))}
+        {nav.map(({ label, href, icon: Icon }) => {
+          const isActive =
+            pathname === href || (href !== "/dashboard" && pathname.startsWith(href))
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "relative flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                isActive
+                  ? "text-foreground"
+                  : "text-foreground/50 hover:text-foreground",
+              )}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="sidebar-active-pill"
+                  className="absolute inset-0 rounded-md bg-muted"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+              <Icon className="relative z-10 size-4 shrink-0" />
+              <span className="relative z-10">{label}</span>
+            </Link>
+          )
+        })}
       </nav>
 
       <div className="mt-auto p-4 border-t">

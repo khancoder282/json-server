@@ -4,7 +4,7 @@ import Link from "next/link"
 
 export default function RegisterPage() {
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full shadow-sm">
       <CardHeader>
         <CardTitle>Create an account</CardTitle>
         <CardDescription>Enter your details to get started</CardDescription>

@@ -8,7 +8,7 @@ interface Props {
 export default async function VerifyEmailPage({ searchParams }: Props) {
   const { email, token } = await searchParams
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full shadow-sm">
       <CardHeader>
         <CardTitle>Verify your email</CardTitle>
       </CardHeader>
