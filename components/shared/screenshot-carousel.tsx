@@ -3,42 +3,39 @@ import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { ChevronLeft, ChevronRight, Database, Key, LayoutDashboard, ScrollText } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ImageFrame } from "@/components/shared/image-frame"
 
 const slides = [
   {
     id: "dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
-    title: "Overview at a glance",
-    desc: "Your stores, keys, and API usage — all visible at once.",
     imageLabel: "Dashboard screenshot",
+    tag: "Frame 2",
     urlSlug: "dashboard",
   },
   {
     id: "editor",
     label: "JSON Editor",
     icon: Database,
-    title: "Powerful code editor",
-    desc: "Edit JSON with syntax highlighting, validation, and one-click formatting.",
     imageLabel: "JSON editor screenshot",
+    tag: "Frame 3",
     urlSlug: "dashboard/json",
   },
   {
     id: "keys",
     label: "API Keys",
     icon: Key,
-    title: "Granular access control",
-    desc: "Scoped keys with GET/PUT permissions, linked to specific stores.",
     imageLabel: "API keys screenshot",
+    tag: "Frame 4",
     urlSlug: "dashboard/keys",
   },
   {
     id: "logs",
     label: "Logs",
     icon: ScrollText,
-    title: "Complete request history",
-    desc: "Every API call logged with IP, user agent, and full request/response body.",
     imageLabel: "Access logs screenshot",
+    tag: "Frame 5",
     urlSlug: "dashboard/logs",
   },
 ]
@@ -75,7 +72,6 @@ export function ScreenshotCarousel() {
   }, [paused, next])
 
   const slide = slides[current]
-  const SlideIcon = slide.icon
 
   return (
     <div
@@ -159,21 +155,10 @@ export function ScreenshotCarousel() {
               animate="center"
               exit="exit"
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted/60 to-muted/10"
+              className="absolute inset-0"
             >
-              {/* ↓ Image slot — replace this div with:
-                  <Image src="/screenshots/dashboard.png" fill className="object-cover" alt="Dashboard" />
-              */}
-              <div className="flex flex-col items-center gap-4 px-6 text-center">
-                <div className="flex size-16 items-center justify-center rounded-2xl border bg-background/90 shadow-md">
-                  <SlideIcon className="size-8 text-primary/50" />
-                </div>
-                <div>
-                  <p className="font-semibold">{slide.title}</p>
-                  <p className="mt-1 max-w-xs text-sm text-muted-foreground">{slide.desc}</p>
-                </div>
-                <span className="text-xs text-muted-foreground/35">{slide.imageLabel}</span>
-              </div>
+              {/* ↓ Replace with: <Image src="/img/slide-N.png" fill className="object-cover" alt="..." /> */}
+              <ImageFrame label={slide.imageLabel} tag={slide.tag} />
             </motion.div>
           </AnimatePresence>
 

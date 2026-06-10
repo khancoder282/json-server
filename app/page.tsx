@@ -5,53 +5,53 @@ import { Logo } from "@/components/shared/logo"
 import { BlurFade } from "@/components/shared/blur-fade"
 import { TiltCard } from "@/components/shared/tilt-card"
 import { HeroBackground } from "@/components/shared/hero-background"
+import { ImageFrame } from "@/components/shared/image-frame"
+import { ScreenshotCarousel } from "@/components/shared/screenshot-carousel"
 import { cn } from "@/lib/utils"
 import { signOutAction } from "@/lib/actions/auth"
-import { Database, Globe, Key, LayoutDashboard, ScrollText } from "lucide-react"
-import { ScreenshotCarousel } from "@/components/shared/screenshot-carousel"
 
 const features = [
   {
-    icon: Database,
     title: "JSON Stores",
     desc: "Create and manage JSON data stores with a built-in code editor. Toggle public or private visibility per store.",
     imageLabel: "JSON Editor",
+    tag: "Frame 6",
   },
   {
-    icon: Key,
     title: "API Keys",
     desc: "Issue scoped API keys with granular GET/PUT permissions, linked to specific JSON stores.",
     imageLabel: "Key Management",
+    tag: "Frame 7",
   },
   {
-    icon: ScrollText,
     title: "Access Logs",
     desc: "Track every API call with detailed logs — IP, user agent, request and response bodies.",
     imageLabel: "Access Logs",
+    tag: "Frame 8",
   },
 ]
 
 const steps = [
   {
     step: "01",
-    icon: Database,
     title: "Create a JSON Store",
     desc: "Use the built-in code editor to define your JSON structure. Toggle public or private visibility.",
     imageLabel: "Create store",
+    tag: "Frame 9",
   },
   {
     step: "02",
-    icon: Key,
     title: "Generate an API Key",
     desc: "Issue a scoped key with GET or PUT permissions and link it to the stores you want to expose.",
     imageLabel: "Generate key",
+    tag: "Frame 10",
   },
   {
     step: "03",
-    icon: Globe,
     title: "Integrate anywhere",
     desc: "Call GET /api/json/{id} from any app. Use PUT to deep-merge updates into your store.",
     imageLabel: "API integration",
+    tag: "Frame 11",
   },
 ]
 
@@ -131,7 +131,7 @@ export default async function HomePage() {
             </div>
           </BlurFade>
 
-          {/* Hero image frame with 3D tilt */}
+          {/* ── Frame 1 : Hero ── */}
           <BlurFade delay={0.38} yOffset={30} className="relative w-full max-w-4xl mt-4">
             <TiltCard strength={4} className="w-full">
               <div className="rounded-2xl border shadow-2xl shadow-black/15 overflow-hidden bg-card">
@@ -146,19 +146,16 @@ export default async function HomePage() {
                     app.json-server.com/dashboard
                   </div>
                 </div>
-                {/* Image slot — replace this div with <Image /> */}
-                <div className="aspect-[16/9] bg-gradient-to-br from-muted/50 to-muted/10 flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-3 select-none pointer-events-none">
-                    <LayoutDashboard className="size-16 text-muted-foreground/15" />
-                    <p className="text-sm text-muted-foreground/30 font-medium">Dashboard screenshot</p>
-                  </div>
+                {/* ↓ Replace with: <Image src="/img/hero.png" width={1280} height={720} alt="Dashboard" className="w-full" /> */}
+                <div className="aspect-[16/9]">
+                  <ImageFrame label="Dashboard overview" tag="Frame 1" />
                 </div>
               </div>
             </TiltCard>
           </BlurFade>
         </section>
 
-        {/* ── Carousel ───────────────────────────── */}
+        {/* ── Carousel (Frames 2–5) ───────────────── */}
         <section className="border-t px-6 py-24">
           <div className="max-w-4xl mx-auto space-y-10">
             <BlurFade triggerOnView direction="none">
@@ -174,7 +171,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ── Features ───────────────────────────── */}
+        {/* ── Features (Frames 6–8) ──────────────── */}
         <section className="border-t bg-muted/20 px-6 py-28">
           <div className="max-w-5xl mx-auto space-y-16">
             <BlurFade triggerOnView direction="none">
@@ -188,18 +185,13 @@ export default async function HomePage() {
             </BlurFade>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {features.map(({ icon: Icon, title, desc, imageLabel }, i) => (
+              {features.map(({ title, desc, imageLabel, tag }, i) => (
                 <BlurFade key={title} triggerOnView delay={i * 0.1} yOffset={32}>
                   <TiltCard strength={8} className="h-full">
                     <div className="rounded-xl border bg-card overflow-hidden h-full transition-shadow duration-300 hover:shadow-xl">
-                      {/* Image slot — replace with <Image /> */}
-                      <div className="aspect-video bg-gradient-to-br from-muted/60 to-muted/20 flex items-center justify-center border-b overflow-hidden">
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="size-12 rounded-xl border bg-background/90 shadow-sm flex items-center justify-center">
-                            <Icon className="size-6 text-primary/60" />
-                          </div>
-                          <span className="text-xs text-muted-foreground/40">{imageLabel}</span>
-                        </div>
+                      {/* ↓ Replace with: <Image src="/img/feature-N.png" width={800} height={450} alt={title} className="w-full object-cover" /> */}
+                      <div className="aspect-video border-b">
+                        <ImageFrame label={imageLabel} tag={tag} />
                       </div>
                       <div className="p-5">
                         <h3 className="font-semibold">{title}</h3>
@@ -213,7 +205,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ── How it works ───────────────────────── */}
+        {/* ── How it works (Frames 9–11) ─────────── */}
         <section className="px-6 py-28">
           <div className="max-w-5xl mx-auto space-y-16">
             <BlurFade triggerOnView direction="none">
@@ -224,7 +216,7 @@ export default async function HomePage() {
             </BlurFade>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-              {steps.map(({ step, icon: Icon, title, desc, imageLabel }, i) => (
+              {steps.map(({ step, title, desc, imageLabel, tag }, i) => (
                 <BlurFade
                   key={step}
                   triggerOnView
@@ -233,15 +225,10 @@ export default async function HomePage() {
                   direction={i === 0 ? "left" : i === 2 ? "right" : "up"}
                 >
                   <div className="flex flex-col gap-5">
-                    {/* Image slot — replace with <Image /> */}
+                    {/* ↓ Replace with: <Image src="/img/step-N.png" width={800} height={600} alt={title} className="w-full rounded-xl object-cover shadow-sm" /> */}
                     <TiltCard strength={6}>
-                      <div className="aspect-[4/3] rounded-xl border bg-muted/30 flex items-center justify-center overflow-hidden shadow-sm">
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Icon className="size-5 text-primary/60" />
-                          </div>
-                          <span className="text-xs text-muted-foreground/40">{imageLabel}</span>
-                        </div>
+                      <div className="aspect-[4/3] rounded-xl overflow-hidden border shadow-sm">
+                        <ImageFrame label={imageLabel} tag={tag} />
                       </div>
                     </TiltCard>
                     <div>
@@ -260,7 +247,6 @@ export default async function HomePage() {
 
         {/* ── CTA ────────────────────────────────── */}
         <section className="relative border-t overflow-hidden px-6 py-28 flex flex-col items-center text-center gap-5">
-          {/* subtle glow */}
           <div
             className="pointer-events-none absolute inset-0"
             style={{ background: "radial-gradient(ellipse 60% 60% at 50% 100%, oklch(0.852 0.199 91.936 / 0.07), transparent)" }}
