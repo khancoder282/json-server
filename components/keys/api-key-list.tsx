@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Loader2 } from "lucide-react"
 
 interface ApiKeyWithCount {
   id: string
@@ -147,17 +148,17 @@ function EditKeyDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-1.5">
             <Label>Name</Label>
-            <Input name="name" defaultValue={apiKey.name} required />
+            <Input name="name" defaultValue={apiKey.name} required disabled={pending} />
           </div>
           <div className="space-y-2">
             <Label>Permissions</Label>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox name="perm_get" value="get" defaultChecked={apiKey.permissions.includes("get")} />
+                <Checkbox name="perm_get" value="get" defaultChecked={apiKey.permissions.includes("get")} disabled={pending} />
                 <span className="text-sm">GET</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox name="perm_put" value="put" defaultChecked={apiKey.permissions.includes("put")} />
+                <Checkbox name="perm_put" value="put" defaultChecked={apiKey.permissions.includes("put")} disabled={pending} />
                 <span className="text-sm">PUT</span>
               </label>
             </div>
@@ -168,7 +169,7 @@ function EditKeyDialog({
               <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
                 {stores.map((s) => (
                   <label key={s.id} className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox name="storeIds" value={s.id} />
+                    <Checkbox name="storeIds" value={s.id} disabled={pending} />
                     <span className="text-sm">{s.name}</span>
                   </label>
                 ))}
@@ -178,9 +179,10 @@ function EditKeyDialog({
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex gap-2">
             <Button type="submit" disabled={pending}>
+              {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {pending ? "Saving…" : "Save"}
             </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" disabled={pending} onClick={onClose}>
               Cancel
             </Button>
           </div>

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false })
 
@@ -68,11 +69,11 @@ export function JsonStoreForm({ store }: Props) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-1.5">
         <Label htmlFor="name">Name</Label>
-        <Input id="name" name="name" defaultValue={store?.name} placeholder="My JSON Store" required />
+        <Input id="name" name="name" defaultValue={store?.name} placeholder="My JSON Store" required disabled={pending} />
       </div>
 
       <div className="flex items-center gap-3">
-        <Switch id="isPublic" checked={isPublic} onCheckedChange={setIsPublic} />
+        <Switch id="isPublic" checked={isPublic} onCheckedChange={setIsPublic} disabled={pending} />
         <Label htmlFor="isPublic">
           {isPublic ? "Public — accessible without an API key" : "Private — requires an API key"}
         </Label>
@@ -81,7 +82,7 @@ export function JsonStoreForm({ store }: Props) {
       <div className="grid gap-1.5">
         <div className="flex items-center justify-between">
           <Label>JSON Content</Label>
-          <Button type="button" variant="outline" size="sm" onClick={handleFormat}>
+          <Button type="button" variant="outline" size="sm" onClick={handleFormat} disabled={pending}>
             Format
           </Button>
         </div>
@@ -109,9 +110,10 @@ export function JsonStoreForm({ store }: Props) {
 
       <div className="flex gap-3">
         <Button type="submit" disabled={pending}>
+          {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {pending ? "Saving…" : store ? "Update" : "Create"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.push("/dashboard/json")}>
+        <Button type="button" variant="outline" disabled={pending} onClick={() => router.push("/dashboard/json")}>
           Cancel
         </Button>
       </div>

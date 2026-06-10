@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Loader2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -82,18 +83,18 @@ export function CreateKeyDialog({ stores }: Props) {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid gap-1.5">
                 <Label htmlFor="key-name">Key Name</Label>
-                <Input id="key-name" name="name" placeholder="My API Key" required />
+                <Input id="key-name" name="name" placeholder="My API Key" required disabled={pending} />
               </div>
 
               <div className="space-y-2">
                 <Label>Permissions</Label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox name="perm_get" value="get" id="perm-get" />
+                    <Checkbox name="perm_get" value="get" id="perm-get" disabled={pending} />
                     <span className="text-sm">GET</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox name="perm_put" value="put" id="perm-put" />
+                    <Checkbox name="perm_put" value="put" id="perm-put" disabled={pending} />
                     <span className="text-sm">PUT</span>
                   </label>
                 </div>
@@ -105,7 +106,7 @@ export function CreateKeyDialog({ stores }: Props) {
                   <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
                     {stores.map((s) => (
                       <label key={s.id} className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox name="storeIds" value={s.id} />
+                        <Checkbox name="storeIds" value={s.id} disabled={pending} />
                         <span className="text-sm">{s.name}</span>
                       </label>
                     ))}
@@ -116,6 +117,7 @@ export function CreateKeyDialog({ stores }: Props) {
               {error && <p className="text-sm text-destructive">{error}</p>}
 
               <Button type="submit" disabled={pending} className="w-full">
+                {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {pending ? "Creating…" : "Create Key"}
               </Button>
             </form>

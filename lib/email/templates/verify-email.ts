@@ -12,7 +12,7 @@ export function verifyEmailTemplate(name: string, verifyUrl: string): string {
     <div style="background: #18181b; padding: 32px; text-align: center;">
       <h1 style="color: #fff; margin: 0; font-size: 20px; font-weight: 600;">JSON Server</h1>
     </div>
-    <div style="padding: 40px 32px;">
+    <div style="padding: 40px 32px; text-align: center;">
       <h2 style="margin: 0 0 8px; font-size: 18px; color: #18181b;">Hi ${name},</h2>
       <p style="margin: 0 0 24px; color: #52525b; line-height: 1.6;">
         Thanks for signing up! Please verify your email address to activate your account.
