@@ -1,0 +1,258 @@
+{
+  "info": {
+    "name": "JSON Server API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "store_id",
+      "value": "REPLACE_WITH_YOUR_STORE_ID",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "REPLACE_WITH_YOUR_API_KEY",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "GET — Public store (no auth)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/json/{{store_id}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has id, name, content, updated_at', () => {",
+              "  const b = pm.response.json();",
+              "  pm.expect(b).to.have.all.keys('id', 'name', 'content', 'updated_at');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET — Private store (with API key)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/json/{{store_id}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Content is object', () => {",
+              "  const b = pm.response.json();",
+              "  pm.expect(b.content).to.be.an('object');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET — Missing store (404)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/json/00000000-0000-0000-0000-000000000000",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 404', () => pm.response.to.have.status(404));",
+              "pm.test('Error message', () => {",
+              "  pm.expect(pm.response.json().error).to.eql('Not found');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET — Private store without auth (401)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/json/{{store_id}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 401', () => pm.response.to.have.status(401));",
+              "pm.test('Error message', () => {",
+              "  pm.expect(pm.response.json().error).to.eql('Unauthorized');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT — Deep merge update",
+      "request": {
+        "method": "PUT",
+        "url": "{{base_url}}/api/json/{{store_id}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user\": {\n    \"name\": \"Alice\",\n    \"age\": 30\n  },\n  \"active\": true\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Merged content returned', () => {",
+              "  const b = pm.response.json();",
+              "  pm.expect(b.content.user.name).to.eql('Alice');",
+              "  pm.expect(b.content.active).to.eql(true);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT — Invalid JSON body (400)",
+      "request": {
+        "method": "PUT",
+        "url": "{{base_url}}/api/json/{{store_id}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "this is not json"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 400', () => pm.response.to.have.status(400));",
+              "pm.test('Error message', () => {",
+              "  pm.expect(pm.response.json().error).to.eql('Invalid JSON body');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT — No auth (401)",
+      "request": {
+        "method": "PUT",
+        "url": "{{base_url}}/api/json/{{store_id}}",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"key\": \"value\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 401', () => pm.response.to.have.status(401));",
+              "pm.test('Error message', () => {",
+              "  pm.expect(pm.response.json().error).to.eql('Unauthorized');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT — Wrong API key (401)",
+      "request": {
+        "method": "PUT",
+        "url": "{{base_url}}/api/json/{{store_id}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer json-server-invalidkeyxxxxxxxx"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"key\": \"value\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 401', () => pm.response.to.have.status(401));",
+              "pm.test('Error message', () => {",
+              "  pm.expect(pm.response.json().error).to.eql('Unauthorized');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}
