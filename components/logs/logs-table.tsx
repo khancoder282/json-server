@@ -1,11 +1,25 @@
 "use client"
 import { useState } from "react"
-import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { type Log } from "@/lib/db/schema"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Pagination } from "@/components/shared/pagination"
+import { SortableHeader } from "@/components/shared/sortable-header"
+import { cn } from "@/lib/utils"
 
 interface Props {
   data: { rows: Log[]; total: number; page: number; limit: number }
@@ -13,32 +27,26 @@ interface Props {
 
 export function LogsTable({ data }: Props) {
   const { rows, total, page, limit } = data
-  const router = useRouter()
-  const pathname = usePathname()
-  const sp = useSearchParams()
   const [expandedLog, setExpandedLog] = useState<Log | null>(null)
-  const totalPages = Math.ceil(total / limit)
-
-  function goToPage(p: number) {
-    const params = new URLSearchParams(sp.toString())
-    params.set("page", String(p))
-    router.push(`${pathname}?${params.toString()}`)
-  }
 
   if (rows.length === 0) {
-    return <div className="text-center py-12 text-muted-foreground">No logs found.</div>
+    return (
+      <div className="py-12 text-center text-muted-foreground">
+        No logs found.
+      </div>
+    )
   }
 
   return (
     <>
-      <div className="rounded-md border overflow-x-auto">
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Time</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Result</TableHead>
-              <TableHead>IP</TableHead>
+              <TableHead><SortableHeader column="createdAt">Time</SortableHeader></TableHead>
+              <TableHead><SortableHeader column="action">Action</SortableHeader></TableHead>
+              <TableHead><SortableHeader column="result">Result</SortableHeader></TableHead>
+              <TableHead><SortableHeader column="ip">IP</SortableHeader></TableHead>
               <TableHead>User Agent</TableHead>
               <TableHead className="text-right">Details</TableHead>
             </TableRow>
@@ -46,19 +54,26 @@ export function LogsTable({ data }: Props) {
           <TableBody>
             {rows.map((log) => (
               <TableRow key={log.id}>
-                <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                   {new Date(log.createdAt).toLocaleString()}
                 </TableCell>
                 <TableCell>
                   <code className="text-xs">{log.action}</code>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={log.result === "success" ? "secondary" : "destructive"} className="text-xs">
-                    {log.result}
+                  <Badge
+                    variant={log.result === "success" ? "secondary" : "destructive"}
+                    className={cn("text-xs capitalize", {
+                      "bg-green-700 text-green-50": log.result === "success",
+                    })}
+                  >
+                    • {log.result}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground">{log.ip}</TableCell>
-                <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                <TableCell className="text-xs text-muted-foreground">
+                  {log.ip}
+                </TableCell>
+                <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
                   {log.userAgent}
                 </TableCell>
                 <TableCell className="text-right">
@@ -72,25 +87,11 @@ export function LogsTable({ data }: Props) {
         </Table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Page {page} of {totalPages} ({total} total)
-          </p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => goToPage(page - 1)}>
-              Previous
-            </Button>
-            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => goToPage(page + 1)}>
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      <Pagination page={page} total={total} limit={limit} />
 
       {expandedLog && (
         <Dialog open onOpenChange={(o) => !o && setExpandedLog(null)}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Log Details</DialogTitle>
             </DialogHeader>
@@ -102,16 +103,16 @@ export function LogsTable({ data }: Props) {
               <Row label="User Agent" value={expandedLog.userAgent} />
               {expandedLog.requestBody && (
                 <div>
-                  <p className="font-medium mb-1">Request Body</p>
-                  <pre className="bg-muted p-3 rounded text-xs overflow-auto">
+                  <p className="mb-1 font-medium">Request Body</p>
+                  <pre className="overflow-auto rounded bg-muted p-3 text-xs">
                     {tryFormat(expandedLog.requestBody)}
                   </pre>
                 </div>
               )}
               {expandedLog.responseBody && (
                 <div>
-                  <p className="font-medium mb-1">Response Body</p>
-                  <pre className="bg-muted p-3 rounded text-xs overflow-auto">
+                  <p className="mb-1 font-medium">Response Body</p>
+                  <pre className="overflow-auto rounded bg-muted p-3 text-xs">
                     {tryFormat(expandedLog.responseBody)}
                   </pre>
                 </div>
@@ -127,7 +128,7 @@ export function LogsTable({ data }: Props) {
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex gap-2">
-      <span className="text-muted-foreground w-24 shrink-0">{label}</span>
+      <span className="w-24 shrink-0 text-muted-foreground">{label}</span>
       <span className="break-all">{value}</span>
     </div>
   )

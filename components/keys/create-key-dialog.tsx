@@ -4,10 +4,9 @@ import { useRouter } from "next/navigation"
 import { type JsonStore } from "@/lib/db/schema"
 import { createApiKeyAction } from "@/lib/actions/api-keys"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Loader2 } from "lucide-react"
+import { Loader2, Plus } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -46,18 +45,18 @@ export function CreateKeyDialog({ stores }: Props) {
   function handleCopy() {
     navigator.clipboard.writeText(newKey)
     setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  function handleClose() {
-    setOpen(false)
-    setNewKey("")
-    setError("")
+    setTimeout(() => {
+      setCopied(false)
+      setOpen(false)
+    }, 2000)
   }
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Create New Key</Button>
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        <Plus className="size-4" />
+        Create New Key
+      </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -69,32 +68,36 @@ export function CreateKeyDialog({ stores }: Props) {
               <p className="text-sm text-muted-foreground">
                 Copy your API key now — it will not be shown again.
               </p>
-              <div className="flex gap-2">
-                <code className="flex-1 bg-muted p-2 rounded text-xs break-all">{newKey}</code>
-                <Button size="sm" onClick={handleCopy}>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 overflow-hidden rounded bg-muted px-1">
+                  {newKey}
+                </code>
+                <Button onClick={handleCopy}>
                   {copied ? "Copied!" : "Copy"}
                 </Button>
               </div>
-              <Button onClick={handleClose} className="w-full">
-                Done
-              </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid gap-1.5">
-                <Label htmlFor="key-name">Key Name</Label>
-                <Input id="key-name" name="name" placeholder="My API Key" required disabled={pending} />
-              </div>
-
               <div className="space-y-2">
                 <Label>Permissions</Label>
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox name="perm_get" value="get" id="perm-get" disabled={pending} />
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <Checkbox
+                      name="perm_get"
+                      value="get"
+                      id="perm-get"
+                      disabled={pending}
+                    />
                     <span className="text-sm">GET</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox name="perm_put" value="put" id="perm-put" disabled={pending} />
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <Checkbox
+                      name="perm_put"
+                      value="put"
+                      id="perm-put"
+                      disabled={pending}
+                    />
                     <span className="text-sm">PUT</span>
                   </label>
                 </div>
@@ -103,10 +106,17 @@ export function CreateKeyDialog({ stores }: Props) {
               {stores.length > 0 && (
                 <div className="space-y-2">
                   <Label>Link to JSON Stores</Label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                  <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-2">
                     {stores.map((s) => (
-                      <label key={s.id} className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox name="storeIds" value={s.id} disabled={pending} />
+                      <label
+                        key={s.id}
+                        className="flex cursor-pointer items-center gap-2"
+                      >
+                        <Checkbox
+                          name="storeIds"
+                          value={s.id}
+                          disabled={pending}
+                        />
                         <span className="text-sm">{s.name}</span>
                       </label>
                     ))}

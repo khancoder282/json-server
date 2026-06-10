@@ -2,20 +2,25 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
+import { useTheme } from "@/components/theme-provider"
+import { json } from "@codemirror/lang-json"
+import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode"
 import { type JsonStore } from "@/lib/db/schema"
-import { createJsonStoreAction, updateJsonStoreAction } from "@/lib/actions/json-stores"
+import {
+  createJsonStoreAction,
+  updateJsonStoreAction,
+} from "@/lib/actions/json-stores"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Card, CardContent } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false })
+const CodeMirror = dynamic(() => import("@uiw/react-codemirror"), {
+  ssr: false,
+})
 
-const DEFAULT_JSON = `{
-  "example": "value"
-}`
+const DEFAULT_JSON = `{}`
 
 interface Props {
   store?: JsonStore
@@ -24,9 +29,12 @@ interface Props {
 export function JsonStoreForm({ store }: Props) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-  const [content, setContent] = useState(store?.content ?? DEFAULT_JSON)
+  const [content, setContent] = useState(
+    JSON.stringify(JSON.parse(store?.content ?? DEFAULT_JSON), null, 2)
+  )
   const [isPublic, setIsPublic] = useState(store?.isPublic ?? false)
   const [error, setError] = useState("")
+  const { resolvedTheme } = useTheme()
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -57,64 +65,51 @@ export function JsonStoreForm({ store }: Props) {
     })
   }
 
-  function handleFormat() {
-    try {
-      setContent(JSON.stringify(JSON.parse(content), null, 2))
-    } catch {
-      setError("Cannot format: invalid JSON")
-    }
-  }
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-1.5">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" name="name" defaultValue={store?.name} placeholder="My JSON Store" required disabled={pending} />
-      </div>
-
       <div className="flex items-center gap-3">
-        <Switch id="isPublic" checked={isPublic} onCheckedChange={setIsPublic} disabled={pending} />
+        <Switch
+          id="isPublic"
+          checked={isPublic}
+          onCheckedChange={setIsPublic}
+          disabled={pending}
+        />
         <Label htmlFor="isPublic">
-          {isPublic ? "Public — accessible without an API key" : "Private — requires an API key"}
+          {isPublic
+            ? "Public — accessible without an API key"
+            : "Private — requires an API key"}
         </Label>
       </div>
 
       <div className="grid gap-1.5">
-        <div className="flex items-center justify-between">
-          <Label>JSON Content</Label>
-          <Button type="button" variant="outline" size="sm" onClick={handleFormat} disabled={pending}>
-            Format
-          </Button>
-        </div>
-        <Card>
-          <CardContent className="p-0 overflow-hidden rounded-md">
-            <MonacoEditor
-              height="400px"
-              language="json"
-              value={content}
-              onChange={(v) => setContent(v ?? "")}
-              theme="vs-dark"
-              options={{
-                minimap: { enabled: false },
-                fontSize: 13,
-                tabSize: 2,
-                wordWrap: "on",
-                scrollBeyondLastLine: false,
-              }}
-            />
-          </CardContent>
-        </Card>
+        <Label>JSON Content</Label>
+        <CodeMirror
+          value={content}
+          height="60dvh"
+          extensions={[json()]}
+          theme={resolvedTheme === "dark" ? vscodeDark : vscodeLight}
+          onChange={(v) => setContent(v)}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: true,
+            tabSize: 2,
+          }}
+          className={cn("overflow-auto rounded-lg border", {
+            "border-destructive": error,
+          })}
+        />
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <div className="flex gap-3">
-        <Button type="submit" disabled={pending}>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={pending} className="w-full sm:w-fit">
           {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {pending ? "Saving…" : store ? "Update" : "Create"}
-        </Button>
-        <Button type="button" variant="outline" disabled={pending} onClick={() => router.push("/dashboard/json")}>
-          Cancel
+          {pending
+            ? "Saving…"
+            : store
+              ? "Update json store"
+              : "Create json store"}
         </Button>
       </div>
     </form>

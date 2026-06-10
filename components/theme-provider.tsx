@@ -1,70 +1,64 @@
 "use client"
+import { createContext, useContext, useEffect, useState } from "react"
 
-import * as React from "react"
-import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
+type Theme = "light" | "dark" | "system"
 
-function ThemeProvider({
-  children,
-  ...props
-}: React.ComponentProps<typeof NextThemesProvider>) {
+interface ThemeContextValue {
+  theme: Theme
+  resolvedTheme: "light" | "dark" | undefined
+  setTheme: (t: Theme) => void
+}
+
+const ThemeContext = createContext<ThemeContextValue>({
+  theme: "system",
+  resolvedTheme: undefined,
+  setTheme: () => {},
+})
+
+function getResolved(t: Theme): "light" | "dark" {
+  if (t !== "system") return t
+  return typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light"
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setThemeRaw] = useState<Theme>("system")
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark" | undefined>(undefined)
+
+  useEffect(() => {
+    const stored = (localStorage.getItem("theme") as Theme) || "system"
+    setThemeRaw(stored)
+  }, [])
+
+  useEffect(() => {
+    const resolved = getResolved(theme)
+    setResolvedTheme(resolved)
+    document.documentElement.classList.remove("light", "dark")
+    document.documentElement.classList.add(resolved)
+    localStorage.setItem("theme", theme)
+
+    if (theme === "system") {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)")
+      const handler = () => {
+        const r = getResolved("system")
+        setResolvedTheme(r)
+        document.documentElement.classList.remove("light", "dark")
+        document.documentElement.classList.add(r)
+      }
+      mq.addEventListener("change", handler)
+      return () => mq.removeEventListener("change", handler)
+    }
+  }, [theme])
+
   return (
-    <NextThemesProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-      {...props}
-    >
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme: setThemeRaw }}>
       {children}
-    </NextThemesProvider>
+    </ThemeContext.Provider>
   )
 }
 
-function isTypingTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false
-  }
-
-  return (
-    target.isContentEditable ||
-    target.tagName === "INPUT" ||
-    target.tagName === "TEXTAREA" ||
-    target.tagName === "SELECT"
-  )
+export function useTheme() {
+  return useContext(ThemeContext)
 }
-
-// function ThemeHotkey() {
-//   const { resolvedTheme, setTheme } = useTheme()
-
-//   React.useEffect(() => {
-//     function onKeyDown(event: KeyboardEvent) {
-//       if (event.defaultPrevented || event.repeat) {
-//         return
-//       }
-
-//       if (event.metaKey || event.ctrlKey || event.altKey) {
-//         return
-//       }
-
-//       if (event.key?.toLowerCase() !== "d") {
-//         return
-//       }
-
-//       if (isTypingTarget(event.target)) {
-//         return
-//       }
-
-//       setTheme(resolvedTheme === "dark" ? "light" : "dark")
-//     }
-
-//     window.addEventListener("keydown", onKeyDown)
-
-//     return () => {
-//       window.removeEventListener("keydown", onKeyDown)
-//     }
-//   }, [resolvedTheme, setTheme])
-
-//   return null
-// }
-
-export { ThemeProvider }

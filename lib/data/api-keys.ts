@@ -1,13 +1,34 @@
 "use server"
-import { eq } from "drizzle-orm"
+import { asc, count, desc, eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { apiKeys, apiKeyJsonStores, jsonStores } from "@/lib/db/schema"
 
-export async function getApiKeysByUser(userId: string) {
+const LIMIT = 10
+
+type SortCol = "createdAt" | "permissions"
+
+export async function getApiKeysByUser(
+  userId: string,
+  page = 1,
+  sort: SortCol = "createdAt",
+  order: "asc" | "desc" = "desc",
+) {
+  const offset = (page - 1) * LIMIT
+  const col = sort === "permissions" ? apiKeys.permissions : apiKeys.createdAt
+  const orderFn = order === "asc" ? asc : desc
+
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(apiKeys)
+    .where(eq(apiKeys.userId, userId))
+
   const keys = await db
     .select()
     .from(apiKeys)
     .where(eq(apiKeys.userId, userId))
+    .orderBy(orderFn(col))
+    .limit(LIMIT)
+    .offset(offset)
 
   const result = await Promise.all(
     keys.map(async (key) => {
@@ -15,10 +36,15 @@ export async function getApiKeysByUser(userId: string) {
         .select({ jsonStoreId: apiKeyJsonStores.jsonStoreId })
         .from(apiKeyJsonStores)
         .where(eq(apiKeyJsonStores.apiKeyId, key.id))
-      return { ...key, linkedCount: linked.length }
+      return {
+        ...key,
+        linkedCount: linked.length,
+        linkedStoreIds: linked.map((r) => r.jsonStoreId),
+      }
     }),
   )
-  return result
+
+  return { rows: result, total, page, limit: LIMIT }
 }
 
 export async function getApiKeyByKey(keyStr: string) {

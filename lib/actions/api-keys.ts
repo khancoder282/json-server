@@ -9,7 +9,6 @@ import { auth } from "@/auth"
 import { generateApiKey } from "@/lib/utils/crypto"
 
 const keySchema = z.object({
-  name: z.string().min(1, "Name is required"),
   permissions: z.string().min(1, "Select at least one permission"),
   storeIds: z.array(z.string()),
 })
@@ -25,12 +24,11 @@ export async function createApiKeyAction(formData: FormData) {
   const storeIds = formData.getAll("storeIds") as string[]
 
   const parsed = keySchema.safeParse({
-    name: formData.get("name"),
     permissions: perms || "",
     storeIds,
   })
   if (!parsed.success || !parsed.data.permissions) {
-    return { success: false, error: "Name and at least one permission required" }
+    return { success: false, error: "Select at least one permission" }
   }
 
   const key = generateApiKey()
@@ -39,7 +37,7 @@ export async function createApiKeyAction(formData: FormData) {
   await db.insert(apiKeys).values({
     id,
     userId: session.user.id,
-    name: parsed.data.name,
+    name: id,
     key,
     permissions: parsed.data.permissions,
   })
@@ -74,17 +72,16 @@ export async function updateApiKeyAction(id: string, formData: FormData) {
   const storeIds = formData.getAll("storeIds") as string[]
 
   const parsed = keySchema.safeParse({
-    name: formData.get("name"),
     permissions: perms || "",
     storeIds,
   })
   if (!parsed.success || !parsed.data.permissions) {
-    return { success: false, error: "Name and at least one permission required" }
+    return { success: false, error: "Select at least one permission" }
   }
 
   await db
     .update(apiKeys)
-    .set({ name: parsed.data.name, permissions: parsed.data.permissions })
+    .set({ permissions: parsed.data.permissions })
     .where(eq(apiKeys.id, id))
 
   await db.delete(apiKeyJsonStores).where(eq(apiKeyJsonStores.apiKeyId, id))

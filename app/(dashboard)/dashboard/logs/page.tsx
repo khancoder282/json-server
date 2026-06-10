@@ -10,6 +10,8 @@ interface Props {
     action?: string
     from?: string
     to?: string
+    sort?: string
+    order?: string
   }>
 }
 
@@ -25,10 +27,12 @@ export default async function LogManagementPage({ searchParams }: Props) {
     action: sp.action || undefined,
     from: sp.from ? new Date(sp.from) : undefined,
     to: sp.to ? new Date(sp.to) : undefined,
+    sort: (sp.sort as "createdAt" | "action" | "result" | "ip") || "createdAt",
+    order: (sp.order as "asc" | "desc") || "desc",
   })
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Log Management</h1>

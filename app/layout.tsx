@@ -1,7 +1,9 @@
+import type { Metadata } from "next"
 import { Geist_Mono, Inter } from "next/font/google"
 import { SessionProvider } from "next-auth/react"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeScript } from "@/components/theme-script"
 import { cn } from "@/lib/utils"
 import { auth } from "@/auth"
 
@@ -12,7 +14,7 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "JSON Server",
   description: "Your personal JSON storage API",
 }
@@ -29,6 +31,9 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={cn("antialiased", fontMono.variable, inter.variable, "font-sans")}
     >
+      <head>
+        <ThemeScript />
+      </head>
       <body>
         <SessionProvider session={session}>
           <ThemeProvider>{children}</ThemeProvider>

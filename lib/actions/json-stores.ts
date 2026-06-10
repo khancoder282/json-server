@@ -8,7 +8,6 @@ import { jsonStores, apiKeyJsonStores } from "@/lib/db/schema"
 import { auth } from "@/auth"
 
 const storeSchema = z.object({
-  name: z.string().min(1, "Name is required"),
   content: z.string().min(1, "Content is required"),
   isPublic: z.boolean(),
 })
@@ -25,7 +24,6 @@ export async function createJsonStoreAction(formData: FormData) {
   }
 
   const parsed = storeSchema.safeParse({
-    name: formData.get("name"),
     content: contentStr,
     isPublic: formData.get("isPublic") === "true",
   })
@@ -37,7 +35,7 @@ export async function createJsonStoreAction(formData: FormData) {
   await db.insert(jsonStores).values({
     id,
     userId: session.user.id,
-    name: parsed.data.name,
+    name: id,
     content: parsed.data.content,
     isPublic: parsed.data.isPublic,
   })
@@ -58,7 +56,6 @@ export async function updateJsonStoreAction(id: string, formData: FormData) {
   }
 
   const parsed = storeSchema.safeParse({
-    name: formData.get("name"),
     content: contentStr,
     isPublic: formData.get("isPublic") === "true",
   })
@@ -79,7 +76,6 @@ export async function updateJsonStoreAction(id: string, formData: FormData) {
   await db
     .update(jsonStores)
     .set({
-      name: parsed.data.name,
       content: parsed.data.content,
       isPublic: parsed.data.isPublic,
       updatedAt: new Date(),

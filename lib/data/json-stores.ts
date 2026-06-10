@@ -1,10 +1,36 @@
 "use server"
-import { eq } from "drizzle-orm"
+import { asc, count, desc, eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { jsonStores } from "@/lib/db/schema"
 
-export async function getJsonStoresByUser(userId: string) {
-  return db.select().from(jsonStores).where(eq(jsonStores.userId, userId))
+const LIMIT = 10
+
+type SortCol = "createdAt" | "isPublic"
+
+export async function getJsonStoresByUser(
+  userId: string,
+  page = 1,
+  sort: SortCol = "createdAt",
+  order: "asc" | "desc" = "desc",
+) {
+  const offset = (page - 1) * LIMIT
+  const col = sort === "isPublic" ? jsonStores.isPublic : jsonStores.createdAt
+  const orderFn = order === "asc" ? asc : desc
+
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(jsonStores)
+    .where(eq(jsonStores.userId, userId))
+
+  const rows = await db
+    .select()
+    .from(jsonStores)
+    .where(eq(jsonStores.userId, userId))
+    .orderBy(orderFn(col))
+    .limit(LIMIT)
+    .offset(offset)
+
+  return { rows, total, page, limit: LIMIT }
 }
 
 export async function getJsonStoreById(id: string) {

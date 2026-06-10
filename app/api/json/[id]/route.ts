@@ -21,7 +21,7 @@ async function log(
   result: "success" | "error",
   userId: string | null,
   requestBody: string | null,
-  responseBody: string,
+  responseBody: string
 ) {
   await insertLog({
     id: uuidv4(),
@@ -35,11 +35,18 @@ async function log(
   })
 }
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const { id } = await params
   const action = `GET /api/json/${id}`
 
-  const [store] = await db.select().from(jsonStores).where(eq(jsonStores.id, id)).limit(1)
+  const [store] = await db
+    .select()
+    .from(jsonStores)
+    .where(eq(jsonStores.id, id))
+    .limit(1)
 
   if (!store) {
     const body = JSON.stringify({ error: "Not found" })
@@ -49,7 +56,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (!store.isPublic) {
     const authHeader = req.headers.get("authorization")
-    const bearerKey = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null
+    const bearerKey = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : null
 
     if (!bearerKey) {
       const body = JSON.stringify({ error: "Unauthorized" })
@@ -58,7 +67,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const apiKey = await getApiKeyByKey(bearerKey)
-    if (!apiKey || apiKey.userId !== store.userId || !apiKey.permissions.includes("get")) {
+    if (
+      !apiKey ||
+      apiKey.userId !== store.userId ||
+      !apiKey.permissions.includes("get")
+    ) {
       const body = JSON.stringify({ error: "Unauthorized" })
       await log(req, action, "error", store.userId, null, body)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -72,23 +85,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
   }
 
-  const responseData = {
-    id: store.id,
-    name: store.name,
-    content: JSON.parse(store.content),
-    updated_at: store.updatedAt,
-  }
+  const responseData = JSON.parse(store.content);
   const body = JSON.stringify(responseData)
   await log(req, action, "success", store.userId, null, body)
   return NextResponse.json(responseData)
 }
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const { id } = await params
   const action = `PUT /api/json/${id}`
 
   const authHeader = req.headers.get("authorization")
-  const bearerKey = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null
+  const bearerKey = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : null
 
   if (!bearerKey) {
     const body = JSON.stringify({ error: "Unauthorized" })
@@ -96,7 +109,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const [store] = await db.select().from(jsonStores).where(eq(jsonStores.id, id)).limit(1)
+  const [store] = await db
+    .select()
+    .from(jsonStores)
+    .where(eq(jsonStores.id, id))
+    .limit(1)
 
   if (!store) {
     const body = JSON.stringify({ error: "Not found" })
@@ -105,7 +122,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   const apiKey = await getApiKeyByKey(bearerKey)
-  if (!apiKey || apiKey.userId !== store.userId || !apiKey.permissions.includes("put")) {
+  if (
+    !apiKey ||
+    apiKey.userId !== store.userId ||
+    !apiKey.permissions.includes("put")
+  ) {
     const body = JSON.stringify({ error: "Unauthorized" })
     await log(req, action, "error", store.userId, null, body)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -139,13 +160,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     .set({ content: mergedStr, updatedAt: now })
     .where(eq(jsonStores.id, id))
 
-  const responseData = {
-    id: store.id,
-    name: store.name,
-    content: merged,
-    updated_at: now,
-  }
-  const resBody = JSON.stringify(responseData)
+  const resBody = JSON.stringify(merged)
   await log(req, action, "success", store.userId, rawBody, resBody)
-  return NextResponse.json(responseData)
+  return NextResponse.json(merged)
 }

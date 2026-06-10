@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +17,7 @@ interface ConfirmDialogProps {
   description: string
   onConfirm: () => void
   destructive?: boolean
+  loading?: boolean
 }
 
 export function ConfirmDialog({
@@ -25,8 +26,18 @@ export function ConfirmDialog({
   description,
   onConfirm,
   destructive = true,
+  loading = false,
 }: ConfirmDialogProps) {
   const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    const v = () => {
+      if (!open && !loading) {
+        setOpen(false)
+      }
+    }
+    v()
+  }, [open, loading])
 
   return (
     <>
@@ -42,13 +53,15 @@ export function ConfirmDialog({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                onConfirm()
-                setOpen(false)
-              }}
-              className={destructive ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+              disabled={loading}
+              onClick={onConfirm}
+              className={
+                destructive
+                  ? "text-destructive-foreground bg-destructive hover:bg-destructive/90"
+                  : ""
+              }
             >
-              Confirm
+              {loading ? "Loading..." : "Confirm"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react"
 import { loginAction } from "@/lib/actions/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 
@@ -39,7 +40,7 @@ export function LoginForm() {
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="password">Password</Label>
-        <Input id="password" name="password" type="password" required disabled={isPending} />
+        <PasswordInput id="password" name="password" required disabled={isPending} />
       </div>
       {state && !state.success && state.error !== "EMAIL_NOT_VERIFIED" && (
         <p className="text-sm text-destructive">{state.error}</p>
