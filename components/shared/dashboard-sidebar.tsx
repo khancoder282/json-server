@@ -25,19 +25,23 @@ export function DashboardSidebar() {
         <Logo />
       </div>
       <nav className="flex flex-col gap-1 p-3">
-        {nav.map((item) => (
+        <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+          Menu
+        </p>
+        {nav.map(({ label, href, icon: Icon }) => (
           <Link
-            key={item.href}
-            href={item.href}
+            key={href}
+            href={href}
             className={cn(
-              "px-3 py-2 rounded-md text-sm font-medium transition-colors",
-              pathname === item.href ||
-                (item.href !== "/dashboard" && pathname.startsWith(item.href))
+              "flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              pathname === href ||
+                (href !== "/dashboard" && pathname.startsWith(href))
                 ? "bg-muted text-foreground"
                 : "text-foreground/50 hover:text-foreground hover:bg-muted/50",
             )}
           >
-            {item.label}
+            <Icon className="size-4 shrink-0" />
+            {label}
           </Link>
         ))}
       </nav>
@@ -57,29 +61,34 @@ export function DashboardSidebar() {
   )
 }
 
+const mobileLabel: Record<string, string> = {
+  "Overview": "Home",
+  "JSON Management": "JSON",
+  "Key Management": "Keys",
+  "Log Management": "Logs",
+  "Settings": "Settings",
+}
+
 export function MobileNav() {
   const pathname = usePathname()
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background flex">
-      {nav.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={cn(
-            "flex-1 py-3 text-center text-xs font-medium transition-colors",
-            pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href))
-              ? "text-primary"
-              : "text-muted-foreground",
-          )}
-        >
-          {item.label === "Overview"
-            ? "Home"
-            : item.label === "Settings"
-            ? "Settings"
-            : item.label.split(" ")[0]}
-        </Link>
-      ))}
+      {nav.map(({ label, href, icon: Icon }) => {
+        const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href))
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={cn(
+              "flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium transition-colors",
+              active ? "text-primary" : "text-muted-foreground",
+            )}
+          >
+            <Icon className="size-5" />
+            {mobileLabel[label]}
+          </Link>
+        )
+      })}
     </nav>
   )
 }

@@ -22,8 +22,8 @@ export default async function KeyManagementPage({ searchParams }: Props) {
   ])
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="max-w-5xl space-y-8">
+      <div className="flex items-center justify-between border-b pb-6">
         <div>
           <h1 className="text-2xl font-bold">Key Management</h1>
           <p className="text-muted-foreground">Manage your API keys</p>

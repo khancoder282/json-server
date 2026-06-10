@@ -4,6 +4,7 @@ import { SessionProvider } from "next-auth/react"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ThemeScript } from "@/components/theme-script"
+import { Toaster } from "@/components/shared/toaster"
 import { cn } from "@/lib/utils"
 import { auth } from "@/auth"
 
@@ -36,7 +37,10 @@ export default async function RootLayout({
       </head>
       <body>
         <SessionProvider session={session}>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+              {children}
+              <Toaster />
+            </ThemeProvider>
         </SessionProvider>
       </body>
     </html>

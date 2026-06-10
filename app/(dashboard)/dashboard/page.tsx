@@ -17,8 +17,8 @@ export default async function DashboardPage() {
   ])
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-8 max-w-5xl">
+      <div className="border-b pb-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">Welcome back, {user?.name}</p>
       </div>

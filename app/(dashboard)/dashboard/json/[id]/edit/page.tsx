@@ -19,8 +19,8 @@ export default async function EditJsonStorePage({ params }: Props) {
   if (!store || store.userId !== session!.user!.id) notFound()
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <div className="flex items-center">
+    <div className="max-w-5xl space-y-8">
+      <div className="flex items-center border-b pb-6">
         <Link
           href="/dashboard/json"
           className={cn(buttonVariants({ variant: "ghost" }))}
@@ -29,7 +29,6 @@ export default async function EditJsonStorePage({ params }: Props) {
         </Link>
         <h1 className="text-2xl font-bold">Edit JSON Store</h1>
       </div>
-      <div className="border-t" />
       <JsonStoreForm store={store} />
     </div>
   )
