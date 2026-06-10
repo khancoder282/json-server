@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm"
 import { getApiKeyByKey, getLinkedStoreIds } from "@/lib/data/api-keys"
 import { insertLog } from "@/lib/data/logs"
 import { deepMerge } from "@/lib/utils/merge"
+import { checkRateLimit, rateLimitHeaders } from "@/lib/utils/rate-limit"
 
 function getIp(req: NextRequest) {
   return req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown"
@@ -83,9 +84,26 @@ export async function GET(
       await log(req, action, "error", store.userId, null, body)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    // ── Rate limit (private stores only — key required) ──
+    const rl = checkRateLimit(apiKey.id)
+    if (!rl.allowed) {
+      const body = JSON.stringify({ error: "Rate limit exceeded. Max 100 requests per minute per API key." })
+      await log(req, action, "error", store.userId, null, body)
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Max 100 requests per minute per API key." },
+        { status: 429, headers: rateLimitHeaders(rl) }
+      )
+    }
+
+    const responseData = JSON.parse(store.content)
+    const resBody = JSON.stringify(responseData)
+    await log(req, action, "success", store.userId, null, resBody)
+    return NextResponse.json(responseData, { headers: rateLimitHeaders(rl) })
   }
 
-  const responseData = JSON.parse(store.content);
+  // Public store — no rate limit
+  const responseData = JSON.parse(store.content)
   const body = JSON.stringify(responseData)
   await log(req, action, "success", store.userId, null, body)
   return NextResponse.json(responseData)
@@ -139,6 +157,17 @@ export async function PUT(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  // ── Rate limit ──────────────────────────────────────────
+  const rl = checkRateLimit(apiKey.id)
+  if (!rl.allowed) {
+    const body = JSON.stringify({ error: "Rate limit exceeded. Max 100 requests per minute per API key." })
+    await log(req, action, "error", store.userId, null, body)
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Max 100 requests per minute per API key." },
+      { status: 429, headers: rateLimitHeaders(rl) }
+    )
+  }
+
   let incoming: Record<string, unknown>
   let rawBody: string
   try {
@@ -162,5 +191,5 @@ export async function PUT(
 
   const resBody = JSON.stringify(merged)
   await log(req, action, "success", store.userId, rawBody, resBody)
-  return NextResponse.json(merged)
+  return NextResponse.json(merged, { headers: rateLimitHeaders(rl) })
 }

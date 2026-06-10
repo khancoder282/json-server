@@ -2,16 +2,16 @@
 import { motion } from "motion/react"
 
 const tokens = [
-  { text: "{", top: "12%", left: "6%",  size: "5xl", delay: 0,   dur: 7  },
-  { text: "}", top: "72%", left: "4%",  size: "4xl", delay: 1.6, dur: 9  },
-  { text: "[", top: "18%", right: "8%", size: "4xl", delay: 0.9, dur: 8  },
-  { text: "]", top: "65%", right: "6%", size: "5xl", delay: 2.2, dur: 7  },
-  { text: ":", top: "42%", left: "3%",  size: "3xl", delay: 3,   dur: 10 },
-  { text: ",", top: "55%", right: "4%", size: "3xl", delay: 1.1, dur: 8  },
-  { text: '"id"',      top: "30%", left: "2%",   size: "sm", delay: 1.8, dur: 11 },
-  { text: '"content"', top: "80%", right: "3%",  size: "sm", delay: 0.5, dur: 9  },
-  { text: "true",      top: "8%",  right: "20%", size: "sm", delay: 2.8, dur: 12 },
-  { text: "null",      top: "88%", left: "14%",  size: "sm", delay: 3.5, dur: 10 },
+  { text: "{", top: "12%", left: "6%",  size: "5xl", delay: 0,   dur: 11 },
+  { text: "}", top: "72%", left: "4%",  size: "4xl", delay: 2.0, dur: 14 },
+  { text: "[", top: "18%", right: "8%", size: "4xl", delay: 1.2, dur: 13 },
+  { text: "]", top: "65%", right: "6%", size: "5xl", delay: 3.0, dur: 11 },
+  { text: ":", top: "42%", left: "3%",  size: "3xl", delay: 4.0, dur: 15 },
+  { text: ",", top: "55%", right: "4%", size: "3xl", delay: 1.5, dur: 13 },
+  { text: '"id"',      top: "30%", left: "2%",   size: "sm", delay: 2.5, dur: 16 },
+  { text: '"content"', top: "80%", right: "3%",  size: "sm", delay: 0.8, dur: 14 },
+  { text: "true",      top: "8%",  right: "20%", size: "sm", delay: 3.5, dur: 18 },
+  { text: "null",      top: "88%", left: "14%",  size: "sm", delay: 5.0, dur: 15 },
 ]
 
 export function HeroBackground() {

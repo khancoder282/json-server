@@ -29,15 +29,15 @@ export function BlurFade({
   children,
   className,
   delay = 0,
-  duration = 0.55,
-  yOffset = 10,
-  blur = "6px",
+  duration = 0.8,
+  yOffset = 16,
+  blur = "8px",
   triggerOnView = false,
   direction = "up",
 }: BlurFadeProps) {
   const initial = getInitial(direction, yOffset, blur)
   const target = { opacity: 1, x: 0, y: 0, filter: "blur(0px)" }
-  const transition = { duration, delay, ease: [0.16, 1, 0.3, 1] as const }
+  const transition = { duration, delay, ease: [0.22, 1, 0.36, 1] as const }
 
   if (triggerOnView) {
     return (

@@ -2,40 +2,44 @@
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { ChevronLeft, ChevronRight, Database, Key, LayoutDashboard, ScrollText } from "lucide-react"
+import { ThemedImage } from "@/components/shared/themed-image"
 import { cn } from "@/lib/utils"
-import { ImageFrame } from "@/components/shared/image-frame"
 
 const slides = [
   {
     id: "dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
-    imageLabel: "Dashboard screenshot",
-    tag: "Frame 2",
+    light: "frame-2-dashboard-light.webp",
+    dark:  "frame-2-dashboard-dark.webp",
+    alt: "Dashboard overview",
     urlSlug: "dashboard",
   },
   {
     id: "editor",
     label: "JSON Editor",
     icon: Database,
-    imageLabel: "JSON editor screenshot",
-    tag: "Frame 3",
+    light: "frame-3-json-light.webp",
+    dark:  "frame-3-json-dark.webp",
+    alt: "JSON store editor",
     urlSlug: "dashboard/json",
   },
   {
     id: "keys",
     label: "API Keys",
     icon: Key,
-    imageLabel: "API keys screenshot",
-    tag: "Frame 4",
+    light: "frame-4-keys-light.webp",
+    dark:  "frame-4-keys-dark.webp",
+    alt: "API key management",
     urlSlug: "dashboard/keys",
   },
   {
     id: "logs",
     label: "Logs",
     icon: ScrollText,
-    imageLabel: "Access logs screenshot",
-    tag: "Frame 5",
+    light: "frame-5-logs-light.webp",
+    dark:  "frame-5-logs-dark.webp",
+    alt: "Access logs",
     urlSlug: "dashboard/logs",
   },
 ]
@@ -157,8 +161,14 @@ export function ScreenshotCarousel() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="absolute inset-0"
             >
-              {/* ↓ Replace with: <Image src="/img/slide-N.png" fill className="object-cover" alt="..." /> */}
-              <ImageFrame label={slide.imageLabel} tag={slide.tag} />
+              <ThemedImage
+                lightSrc={`/screenshots/${slide.light}`}
+                darkSrc={`/screenshots/${slide.dark}`}
+                alt={slide.alt}
+                fill
+                className="object-cover object-top"
+                sizes="(max-width: 1024px) 100vw, 896px"
+              />
             </motion.div>
           </AnimatePresence>
 

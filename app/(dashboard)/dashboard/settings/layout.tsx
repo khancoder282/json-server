@@ -10,7 +10,11 @@ const items = [
   { label: "Profile", href: "/dashboard/settings/profile", icon: User },
   { label: "Password", href: "/dashboard/settings/password", icon: KeyRound },
   { label: "Theme", href: "/dashboard/settings/theme", icon: Palette },
-  { label: "Danger Zone", href: "/dashboard/settings/danger", icon: TriangleAlert },
+  {
+    label: "Danger Zone",
+    href: "/dashboard/settings/danger",
+    icon: TriangleAlert,
+  },
 ]
 
 export default function SettingsLayout({
@@ -29,14 +33,13 @@ export default function SettingsLayout({
 
   return (
     <div className="max-w-3xl">
-      <div className="border-b pb-6 mb-8">
+      <div className="mb-8 border-b pb-6">
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-muted-foreground">Manage your account</p>
       </div>
       <div className="flex flex-col gap-8 sm:flex-row">
-        <nav className="flex w-full shrink-0 flex-col gap-0.5 border-b pb-6 sm:w-45 sm:border-none">
+        <nav className="flex w-full shrink-0 flex-col gap-2 border-b pb-6 sm:w-45 sm:border-none">
           {items.map(({ label, href, icon: Icon }) => {
-            const isDanger = href.includes("danger")
             const active = pathname === href
             return (
               <Link
@@ -44,13 +47,9 @@ export default function SettingsLayout({
                 href={href}
                 className={cn(
                   "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  isDanger
-                    ? active
-                      ? "bg-destructive/10 text-destructive"
-                      : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    : active
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                  active
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
               >
                 <Icon className="size-4 shrink-0" />
