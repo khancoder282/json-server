@@ -60,6 +60,34 @@ function parseArgs(argv: string[]) {
   return { branch, remote, dryRun }
 }
 
+// .nft.json traces list every node_modules file `next start` still reads
+// at runtime (the same data `output: "standalone"` ships). Anything absent
+// from the traces was bundled into .next by the build, so the deploy
+// manifest can drop it.
+async function tracedRuntimeDeps(
+  deps: Record<string, string>
+): Promise<Record<string, string>> {
+  const needed = new Set(["next", "react", "react-dom"])
+  const scans = [
+    { glob: new Bun.Glob("*.nft.json"), cwd: ".next" },
+    { glob: new Bun.Glob("**/*.nft.json"), cwd: ".next/server" },
+  ]
+  for (const { glob, cwd } of scans) {
+    for await (const file of glob.scan(cwd)) {
+      const trace = (await Bun.file(join(cwd, file)).json()) as {
+        files?: string[]
+      }
+      for (const traced of trace.files ?? []) {
+        const match = traced.match(/node_modules\/(@[^/]+\/[^/]+|[^@/][^/]*)/)
+        if (match) needed.add(match[1])
+      }
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(deps).filter(([name]) => needed.has(name))
+  )
+}
+
 async function main() {
   const { branch, remote, dryRun } = parseArgs(Bun.argv.slice(2))
 
@@ -103,6 +131,34 @@ async function main() {
     for (const file of EXCLUDE_AFTER_COPY) {
       await rm(join(stage, file), { recursive: true, force: true })
     }
+
+    // Replace the copied package.json with a runtime-only manifest: the
+    // build bundles app code + deps into .next, so the server just needs
+    // next/react (plus anything the traces still load) and `next start`.
+    const pkg = (await Bun.file("package.json").json()) as {
+      name?: string
+      version?: string
+      type?: string
+      dependencies?: Record<string, string>
+    }
+    await Bun.write(
+      join(stage, "package.json"),
+      JSON.stringify(
+        {
+          name: pkg.name,
+          version: pkg.version,
+          private: true,
+          type: pkg.type,
+          scripts: { start: "next start" },
+          dependencies: await tracedRuntimeDeps(pkg.dependencies ?? {}),
+        },
+        null,
+        2
+      ) + "\n"
+    )
+    // Rewrite the copied bun.lock to match the pruned manifest so server
+    // installs stay pinned and don't trip frozen-lockfile checks.
+    await $`bun install --lockfile-only`.cwd(stage)
 
     const sha = (await $`git rev-parse --short HEAD`.text()).trim()
     const date = new Date().toISOString()
