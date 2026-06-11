@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { type JsonStore } from "@/lib/db/schema"
+import { maskApiKey } from "@/lib/utils"
 import { deleteApiKeyAction, updateApiKeyAction } from "@/lib/actions/api-keys"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -97,7 +98,7 @@ export function ApiKeyList({ data, stores }: Props) {
                     ) : (
                       <Copy className="size-3 shrink-0" />
                     )}
-                    {key.key}
+                    {maskApiKey(key.key)}
                   </button>
                 </TableCell>
                 <TableCell>

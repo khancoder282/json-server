@@ -13,7 +13,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
-    "cron": "bun scripts/cron.ts"
+    "cron": "bun scripts/cron.ts",
+    "deploy": "bun scripts/deploy.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
