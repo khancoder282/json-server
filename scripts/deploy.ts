@@ -1,5 +1,6 @@
 /**
- * Build Next.js and force-push only the runtime files to a deploy branch.
+ * Build Next.js (standalone) and force-push a self-contained server to a
+ * deploy branch — no `bun install` needed on the server.
  *
  * Usage:
  *   bun run deploy                      → deploys to branch "deploy"
@@ -7,9 +8,9 @@
  *   bun run deploy --dry-run            → build + stage everything, skip the push
  *   bun run deploy --remote=<name|url>  → push to another remote (default: origin)
  *
- * The deploy branch is a fresh snapshot on every run (single commit,
- * force-pushed). To run the app from it:
- *   bun install --production && bun run start
+ * Requires `output: "standalone"` in next.config.ts. The deploy branch is a
+ * fresh snapshot on every run (single commit, force-pushed). To run it:
+ *   PORT=3000 bun server.js
  */
 import { $ } from "bun"
 import { existsSync } from "node:fs"
@@ -19,24 +20,10 @@ import { join } from "node:path"
 
 const DEFAULT_BRANCH = "deploy"
 
-// Everything `next start` needs at runtime — nothing else gets pushed.
-// Note: .env* files are intentionally excluded; the server provides its own.
-const INCLUDE = [
-  ".next",
-  "public",
-  "package.json",
-  "bun.lock",
-  "next.config.ts",
-]
-const REQUIRED = [".next", "package.json"]
-// Dev/build-cache leftovers inside .next that `next start` never reads.
-const EXCLUDE_AFTER_COPY = [
-  ".next/cache",
-  ".next/dev",
-  ".next/types",
-  ".next/diagnostics",
-  ".next/trace",
-]
+// `next build` with output:"standalone" emits a minimal server here, with a
+// pruned node_modules bundled in — but NOT the static assets or public/, which
+// Next expects to be copied alongside the server. We assemble all three.
+const STANDALONE_DIR = ".next/standalone"
 
 function fail(message: string): never {
   console.error(`✖ ${message}`)
@@ -58,34 +45,6 @@ function parseArgs(argv: string[]) {
   }
   if (!branch) fail("Missing branch name after -b")
   return { branch, remote, dryRun }
-}
-
-// .nft.json traces list every node_modules file `next start` still reads
-// at runtime (the same data `output: "standalone"` ships). Anything absent
-// from the traces was bundled into .next by the build, so the deploy
-// manifest can drop it.
-async function tracedRuntimeDeps(
-  deps: Record<string, string>
-): Promise<Record<string, string>> {
-  const needed = new Set(["next", "react", "react-dom"])
-  const scans = [
-    { glob: new Bun.Glob("*.nft.json"), cwd: ".next" },
-    { glob: new Bun.Glob("**/*.nft.json"), cwd: ".next/server" },
-  ]
-  for (const { glob, cwd } of scans) {
-    for await (const file of glob.scan(cwd)) {
-      const trace = (await Bun.file(join(cwd, file)).json()) as {
-        files?: string[]
-      }
-      for (const traced of trace.files ?? []) {
-        const match = traced.match(/node_modules\/(@[^/]+\/[^/]+|[^@/][^/]*)/)
-        if (match) needed.add(match[1])
-      }
-    }
-  }
-  return Object.fromEntries(
-    Object.entries(deps).filter(([name]) => needed.has(name))
-  )
 }
 
 async function main() {
@@ -115,31 +74,31 @@ async function main() {
   console.log("▶ Building Next.js…")
   await $`bun run build`
 
-  console.log("▶ Staging deploy files…")
+  if (!existsSync(join(STANDALONE_DIR, "server.js")))
+    fail(
+      `${STANDALONE_DIR}/server.js missing — set output: "standalone" in next.config.ts`
+    )
+
+  console.log("▶ Staging standalone server…")
   const stage = await mkdtemp(join(tmpdir(), "json-server-deploy-"))
 
   try {
-    for (const file of INCLUDE) {
-      if (!existsSync(file)) {
-        if (REQUIRED.includes(file))
-          fail(`Required file/folder missing after build: ${file}`)
-        console.warn(`  (skipping missing ${file})`)
-        continue
-      }
-      await cp(file, join(stage, file), { recursive: true })
-    }
-    for (const file of EXCLUDE_AFTER_COPY) {
-      await rm(join(stage, file), { recursive: true, force: true })
-    }
+    // 1. The standalone server + its bundled node_modules become the root.
+    await cp(STANDALONE_DIR, stage, { recursive: true })
+    // 2. Static assets and public/ aren't included in standalone — Next loads
+    //    them from .next/static and public/ relative to server.js.
+    await cp(".next/static", join(stage, ".next/static"), { recursive: true })
+    if (existsSync("public"))
+      await cp("public", join(stage, "public"), { recursive: true })
 
-    // Replace the copied package.json with a runtime-only manifest: the
-    // build bundles app code + deps into .next, so the server just needs
-    // next/react (plus anything the traces still load) and `next start`.
-    const pkg = (await Bun.file("package.json").json()) as {
+    // Slim the standalone package.json down to a clean start script — its
+    // dependencies are irrelevant since node_modules is already bundled.
+    const pkg = (await Bun.file(
+      join(STANDALONE_DIR, "package.json")
+    ).json()) as {
       name?: string
       version?: string
       type?: string
-      dependencies?: Record<string, string>
     }
     await Bun.write(
       join(stage, "package.json"),
@@ -149,32 +108,27 @@ async function main() {
           version: pkg.version,
           private: true,
           type: pkg.type,
-          scripts: { start: "next start" },
-          dependencies: await tracedRuntimeDeps(pkg.dependencies ?? {}),
+          scripts: { start: "bun server.js" },
         },
         null,
         2
       ) + "\n"
     )
-    // Rewrite the copied bun.lock to match the pruned manifest so server
-    // installs stay pinned and don't trip frozen-lockfile checks.
-    await $`bun install --lockfile-only`.cwd(stage)
 
     const sha = (await $`git rev-parse --short HEAD`.text()).trim()
     const date = new Date().toISOString()
     await Bun.write(
       join(stage, "README.md"),
       [
-        "# Deploy snapshot",
+        "# Deploy snapshot (Next.js standalone)",
         "",
         `- Source: \`${currentBranch}\` @ \`${sha}\``,
         `- Built: ${date}`,
         "",
-        "Run it:",
+        "Self-contained — no install needed. Provide env vars and run:",
         "",
         "```sh",
-        "bun install --production",
-        "bun run start",
+        "PORT=3000 bun server.js   # or: bun run start",
         "```",
         "",
       ].join("\n")
