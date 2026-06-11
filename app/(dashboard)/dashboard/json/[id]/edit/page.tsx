@@ -19,7 +19,7 @@ export default async function EditJsonStorePage({ params }: Props) {
   if (!store || store.userId !== session!.user!.id) notFound()
 
   return (
-    <div className="max-w-5xl space-y-8">
+    <div className="space-y-8">
       <div className="flex items-center border-b pb-6">
         <Link
           href="/dashboard/json"

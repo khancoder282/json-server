@@ -46,6 +46,7 @@ export const apiKeys = mysqlTable("api_keys", {
   name: varchar("name", { length: 255 }).notNull(),
   key: varchar("key", { length: 255 }).notNull().unique(),
   permissions: varchar("permissions", { length: 50 }).notNull(),
+  isLocked: boolean("is_locked").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 

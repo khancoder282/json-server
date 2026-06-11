@@ -1,6 +1,7 @@
 "use client"
 import Link from "next/link"
 import { useState, useTransition } from "react"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { type JsonStore } from "@/lib/db/schema"
 import { deleteJsonStoreAction } from "@/lib/actions/json-stores"
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { Pagination } from "@/components/shared/pagination"
 import { SortableHeader } from "@/components/shared/sortable-header"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -30,7 +32,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { CodeEditor } from "@/components/json/code-editor"
+import { useTheme } from "@/components/theme-provider"
+
+function EditorSkeleton() {
+  return (
+    <div className="flex h-full flex-col gap-2 rounded-lg border p-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Skeleton
+          key={i}
+          className="h-4 rounded"
+          style={{ width: `${[60, 80, 72, 55, 90, 65, 78, 50][i]}%` }}
+        />
+      ))}
+    </div>
+  )
+}
+
+const MonacoJsonEditor = dynamic(
+  () =>
+    import("@/components/json/monaco-json-editor").then(
+      (m) => m.MonacoJsonEditor
+    ),
+  { ssr: false, loading: () => <EditorSkeleton /> }
+)
+
 import {
   Check,
   Copy,
@@ -50,6 +75,8 @@ interface Props {
 export function JsonStoreList({ data }: Props) {
   const { rows: stores, total, page, limit } = data
   const router = useRouter()
+  const { resolvedTheme } = useTheme()
+  const monacoTheme = resolvedTheme === "dark" ? "dracula" : "vs"
   const [pending, startTransition] = useTransition()
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [viewStore, setViewStore] = useState<JsonStore | null>(null)
@@ -214,9 +241,10 @@ export function JsonStoreList({ data }: Props) {
                 </Badge>
               </DialogTitle>
             </DialogHeader>
-            <CodeEditor
+            <MonacoJsonEditor
               value={JSON.stringify(JSON.parse(viewStore.content), null, 2)}
               readOnly
+              monacoTheme={monacoTheme}
               height="60dvh"
             />
           </DialogContent>

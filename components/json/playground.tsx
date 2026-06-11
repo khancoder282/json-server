@@ -1,5 +1,6 @@
 "use client"
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
+import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { type JsonStore } from "@/lib/db/schema"
@@ -8,8 +9,31 @@ import {
   ApiKeyCombobox,
   type KeyItem,
 } from "@/components/json/api-key-combobox"
-import { CodeEditor } from "@/components/json/code-editor"
 import { StoreCombobox } from "@/components/json/store-combobox"
+import { useTheme } from "@/components/theme-provider"
+import { Skeleton } from "@/components/ui/skeleton"
+
+function EditorSkeleton() {
+  return (
+    <div className="flex h-full flex-col gap-2 rounded-lg border p-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Skeleton
+          key={i}
+          className="h-4 rounded"
+          style={{ width: `${[60, 80, 72, 55, 90, 65, 78, 50][i]}%` }}
+        />
+      ))}
+    </div>
+  )
+}
+
+const MonacoJsonEditor = dynamic(
+  () =>
+    import("@/components/json/monaco-json-editor").then(
+      (m) => m.MonacoJsonEditor
+    ),
+  { ssr: false, loading: () => <EditorSkeleton /> }
+)
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -74,6 +98,8 @@ function statusMeta(status: number): {
 
 export function Playground({ store, apiKeys, stores }: Props) {
   const router = useRouter()
+  const { resolvedTheme } = useTheme()
+  const monacoTheme = resolvedTheme === "dark" ? "dracula" : "vs"
 
   // No auto-selection: the user must explicitly pick a key (keyChosen) before
   // the request builder is revealed.
@@ -92,6 +118,13 @@ export function Playground({ store, apiKeys, stores }: Props) {
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(
     null
   )
+  const [serverSyntaxError, setServerSyntaxError] = useState("")
+
+  useEffect(() => {
+    if (!saveMsg) return
+    const t = setTimeout(() => setSaveMsg(null), 3000)
+    return () => clearTimeout(t)
+  }, [saveMsg])
 
   const ready = !!store && keyChosen
 
@@ -199,7 +232,7 @@ export function Playground({ store, apiKeys, stores }: Props) {
 
   return (
     <div className="grid gap-6 md:grid-cols-[1fr_24rem]">
-      {/* ── LERT: output ──────────────────────────────── */}
+      {/* ── LEFT: output ──────────────────────────────── */}
       {ready ? (
         <Tabs
           value={outputTab}
@@ -222,8 +255,11 @@ export function Playground({ store, apiKeys, stores }: Props) {
               <TabsTrigger value="current">Current JSON</TabsTrigger>
             </TabsList>
 
-            {outputTab === "response" ? (
-              result && (
+            {outputTab === "response" && result && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {formatSize(result.body)}
+                </span>
                 <span
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold tabular-nums shadow-sm",
@@ -232,39 +268,22 @@ export function Playground({ store, apiKeys, stores }: Props) {
                 >
                   {result.status} {statusMeta(result.status).label}
                 </span>
-              )
-            ) : (
-              <div className="flex items-center gap-2">
-                {saveMsg && (
-                  <span
-                    className={cn(
-                      "text-xs",
-                      saveMsg.ok ? "text-green-600" : "text-destructive"
-                    )}
-                  >
-                    {saveMsg.text}
-                  </span>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={refreshServer}
-                  disabled={saving}
-                >
-                  Refresh
-                </Button>
-                <Button size="sm" onClick={saveServer} disabled={saving}>
-                  {saving && <Loader2 className="size-4 animate-spin" />}
-                  Save
-                </Button>
               </div>
             )}
           </div>
 
           {/* Response */}
-          <TabsContent value="response" className="pt-2">
+          <TabsContent
+            value="response"
+            className="pt-2 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:duration-200"
+          >
             {result ? (
-              <CodeEditor value={result.body} readOnly height="60dvh" />
+              <MonacoJsonEditor
+                value={result.body}
+                readOnly
+                monacoTheme={monacoTheme}
+                height="60dvh"
+              />
             ) : (
               <div className="flex h-40 items-center justify-center rounded-lg border text-sm text-muted-foreground">
                 Send a request to see the response.
@@ -273,15 +292,48 @@ export function Playground({ store, apiKeys, stores }: Props) {
           </TabsContent>
 
           {/* Current JSON on server */}
-          <TabsContent value="current" className="space-y-1.5 pt-2">
-            <CodeEditor
-              value={serverContent}
-              onChange={setServerContent}
-              height="60dvh"
-            />
-            <p className="text-xs text-muted-foreground">
-              Editing here replaces the whole content (not a merge).
-            </p>
+          <TabsContent
+            value="current"
+            className="pt-2 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:duration-200"
+          >
+            <div className="flex flex-col" style={{ height: "60dvh" }}>
+              <MonacoJsonEditor
+                value={serverContent}
+                onChange={setServerContent}
+                onSyntaxError={setServerSyntaxError}
+                monacoTheme={monacoTheme}
+                className="flex-1 min-h-0 rounded-b-none border-b-0"
+              />
+              <div className="flex shrink-0 items-center justify-between rounded-b-lg border border-t-0 bg-background px-3 py-2">
+                <p className="text-xs text-muted-foreground">
+                  Replaces whole content (not a merge)
+                </p>
+                <div className="flex items-center gap-2">
+                  {saveMsg && (
+                    <span
+                      className={cn(
+                        "text-xs",
+                        saveMsg.ok ? "text-green-600" : "text-destructive"
+                      )}
+                    >
+                      {saveMsg.text}
+                    </span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={refreshServer}
+                    disabled={saving}
+                  >
+                    Refresh
+                  </Button>
+                  <Button size="sm" onClick={saveServer} disabled={saving || !!serverSyntaxError}>
+                    {saving && <Loader2 className="size-4 animate-spin" />}
+                    Save
+                  </Button>
+                </div>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       ) : (
@@ -368,7 +420,7 @@ export function Playground({ store, apiKeys, stores }: Props) {
             </TabsList>
 
             {/* GET */}
-            <TabsContent value="get" className="space-y-4 pt-2">
+            <TabsContent value="get" className="space-y-4 pt-2 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:duration-200">
               <div className="grid gap-1.5">
                 <Label htmlFor="pg-path">
                   Path param{" "}
@@ -412,12 +464,13 @@ export function Playground({ store, apiKeys, stores }: Props) {
             </TabsContent>
 
             {/* PUT */}
-            <TabsContent value="put" className="space-y-4 pt-2">
+            <TabsContent value="put" className="space-y-4 pt-2 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:duration-200">
               <div className="grid gap-1.5">
                 <Label>Request body (deep-merged into content)</Label>
-                <CodeEditor
+                <MonacoJsonEditor
                   value={putBody}
                   onChange={setPutBody}
+                  monacoTheme={monacoTheme}
                   height="240px"
                 />
                 <p className="text-xs text-muted-foreground">

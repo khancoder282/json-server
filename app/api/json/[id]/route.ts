@@ -91,6 +91,12 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    if (apiKey.isLocked) {
+      const body = JSON.stringify({ error: "API key is locked" })
+      await log(req, action, "error", store.userId, null, body)
+      return NextResponse.json({ error: "API key is locked" }, { status: 401 })
+    }
+
     const linkedIds = await getLinkedStoreIds(apiKey.id)
     if (!linkedIds.includes(store.id)) {
       const body = JSON.stringify({ error: "Unauthorized" })
@@ -182,6 +188,12 @@ export async function PUT(
     const body = JSON.stringify({ error: "Unauthorized" })
     await log(req, action, "error", store.userId, null, body)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  if (apiKey.isLocked) {
+    const body = JSON.stringify({ error: "API key is locked" })
+    await log(req, action, "error", store.userId, null, body)
+    return NextResponse.json({ error: "API key is locked" }, { status: 401 })
   }
 
   const linkedIds = await getLinkedStoreIds(apiKey.id)

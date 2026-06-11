@@ -95,6 +95,28 @@ export async function updateApiKeyAction(id: string, formData: FormData) {
   return { success: true }
 }
 
+export async function toggleApiKeyLockAction(id: string) {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+  const [existing] = await db
+    .select()
+    .from(apiKeys)
+    .where(eq(apiKeys.id, id))
+    .limit(1)
+  if (!existing || existing.userId !== session.user.id) {
+    return { success: false, error: "Not found" }
+  }
+
+  await db
+    .update(apiKeys)
+    .set({ isLocked: !existing.isLocked })
+    .where(eq(apiKeys.id, id))
+
+  revalidatePath("/dashboard/keys")
+  return { success: true, isLocked: !existing.isLocked }
+}
+
 export async function deleteApiKeyAction(id: string) {
   const session = await auth()
   if (!session?.user?.id) return { success: false, error: "Unauthorized" }

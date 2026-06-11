@@ -19,7 +19,7 @@ export default async function JsonManagementPage({ searchParams }: Props) {
   const data = await getJsonStoresByUser(session!.user!.id!, page, sort, order)
 
   return (
-    <div className="max-w-5xl space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8">
       <div className="flex items-center justify-between border-b pb-6">
         <div>
           <h1 className="text-2xl font-bold">JSON Management</h1>

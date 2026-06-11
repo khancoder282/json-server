@@ -1,11 +1,16 @@
 "use client"
-import { useState, useTransition } from "react"
+import { useState, useTransition, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { type JsonStore } from "@/lib/db/schema"
 import { cn, maskApiKey } from "@/lib/utils"
-import { deleteApiKeyAction, updateApiKeyAction } from "@/lib/actions/api-keys"
+import {
+  deleteApiKeyAction,
+  toggleApiKeyLockAction,
+  updateApiKeyAction,
+} from "@/lib/actions/api-keys"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
@@ -37,8 +42,11 @@ import {
   ArrowUpFromLine,
   Check,
   Copy,
+  Lock,
+  LockOpen,
   Loader2,
   MoreVertical,
+  Search,
   SquarePen,
   Trash2,
 } from "lucide-react"
@@ -48,6 +56,7 @@ interface ApiKeyWithCount {
   name: string
   key: string
   permissions: string
+  isLocked: boolean
   linkedCount: number
   linkedStoreIds: string[]
   createdAt: Date
@@ -68,6 +77,13 @@ export function ApiKeyList({ data, stores }: Props) {
   function handleDelete(id: string) {
     startTransition(async () => {
       await deleteApiKeyAction(id)
+      router.refresh()
+    })
+  }
+
+  function handleToggleLock(id: string) {
+    startTransition(async () => {
+      await toggleApiKeyLockAction(id)
       router.refresh()
     })
   }
@@ -94,11 +110,9 @@ export function ApiKeyList({ data, stores }: Props) {
             <TableRow>
               <TableHead>Key</TableHead>
               <TableHead>
-                <SortableHeader column="permissions">
-                  Permissions
-                </SortableHeader>
+                <SortableHeader column="permissions">Permissions</SortableHeader>
               </TableHead>
-              <TableHead>Linked Stores</TableHead>
+              <TableHead className="text-center">Linked Stores</TableHead>
               <TableHead>
                 <SortableHeader column="createdAt">Created</SortableHeader>
               </TableHead>
@@ -107,19 +121,24 @@ export function ApiKeyList({ data, stores }: Props) {
           </TableHeader>
           <TableBody>
             {keys.map((key) => (
-              <TableRow key={key.id}>
+              <TableRow key={key.id} className={cn(key.isLocked && "opacity-60")}>
                 <TableCell>
-                  <button
-                    onClick={() => handleCopy(key.key, key.id)}
-                    className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {copiedId === key.id ? (
-                      <Check className="size-3 shrink-0 text-green-500" />
-                    ) : (
-                      <Copy className="size-3 shrink-0" />
+                  <div className="flex items-center gap-2">
+                    {key.isLocked && (
+                      <Lock className="size-3 shrink-0 text-muted-foreground" />
                     )}
-                    {maskApiKey(key.key)}
-                  </button>
+                    <button
+                      onClick={() => handleCopy(key.key, key.id)}
+                      className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {copiedId === key.id ? (
+                        <Check className="size-3 shrink-0 text-green-500" />
+                      ) : (
+                        <Copy className="size-3 shrink-0" />
+                      )}
+                      {maskApiKey(key.key)}
+                    </button>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
@@ -146,7 +165,9 @@ export function ApiKeyList({ data, stores }: Props) {
                     })}
                   </div>
                 </TableCell>
-                <TableCell>{key.linkedCount}</TableCell>
+                <TableCell className="text-center">
+                  <Badge variant="secondary">{key.linkedCount}</Badge>
+                </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {new Date(key.createdAt).toLocaleDateString()}
                 </TableCell>
@@ -164,6 +185,22 @@ export function ApiKeyList({ data, stores }: Props) {
                         <DropdownMenuItem onClick={() => setEditKey(key)}>
                           <SquarePen className="size-4" />
                           Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleToggleLock(key.id)}
+                          disabled={pending}
+                        >
+                          {key.isLocked ? (
+                            <>
+                              <LockOpen className="size-4" />
+                              Unlock
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="size-4" />
+                              Lock
+                            </>
+                          )}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           variant="destructive"
@@ -218,6 +255,43 @@ function EditKeyDialog({
 }) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState("")
+  const [search, setSearch] = useState("")
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () => new Set(apiKey.linkedStoreIds)
+  )
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return stores
+    return stores.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
+    )
+  }, [stores, search])
+
+  const allFilteredSelected =
+    filtered.length > 0 && filtered.every((s) => selectedIds.has(s.id))
+  const someFilteredSelected = filtered.some((s) => selectedIds.has(s.id))
+
+  function toggle(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function selectFiltered() {
+    setSelectedIds((prev) => new Set([...prev, ...filtered.map((s) => s.id)]))
+  }
+
+  function deselectFiltered() {
+    const filteredSet = new Set(filtered.map((s) => s.id))
+    setSelectedIds(
+      (prev) => new Set([...prev].filter((id) => !filteredSet.has(id)))
+    )
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -232,11 +306,16 @@ function EditKeyDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit API Key</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Inject selected IDs as hidden inputs — safe across filter changes */}
+          {[...selectedIds].map((id) => (
+            <input key={id} type="hidden" name="storeIds" value={id} />
+          ))}
+
           <div className="space-y-2">
             <Label>Permissions</Label>
             <div className="flex gap-4">
@@ -260,33 +339,97 @@ function EditKeyDialog({
               </label>
             </div>
           </div>
+
           {stores.length > 0 && (
             <div className="space-y-2">
-              <Label>Linked JSON Stores</Label>
-              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-2">
-                {stores.map((s) => (
-                  <label
-                    key={s.id}
-                    className="flex cursor-pointer items-center gap-2"
-                  >
-                    <Checkbox
-                      name="storeIds"
-                      value={s.id}
-                      defaultChecked={apiKey.linkedStoreIds.includes(s.id)}
-                      disabled={pending}
-                    />
-                    <span className="font-mono text-xs">{s.id}</span>
-                  </label>
-                ))}
+              <div className="flex items-center justify-between">
+                <Label>Linked JSON Stores</Label>
+                <span className="text-xs text-muted-foreground">
+                  {selectedIds.size} / {stores.length} selected
+                </span>
+              </div>
+
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or ID…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8 text-sm"
+                  disabled={pending}
+                />
+              </div>
+
+              {/* Bulk actions */}
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  disabled={allFilteredSelected || pending}
+                  onClick={selectFiltered}
+                >
+                  {search ? "Select filtered" : "Select all"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  disabled={!someFilteredSelected || pending}
+                  onClick={deselectFiltered}
+                >
+                  {search ? "Deselect filtered" : "Deselect all"}
+                </Button>
+                {search && (
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+
+              {/* Store list */}
+              <div className="max-h-72 overflow-y-auto rounded-md border">
+                {filtered.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    No stores match.
+                  </p>
+                ) : (
+                  <div className="space-y-px p-1">
+                    {filtered.map((s) => {
+                      const checked = selectedIds.has(s.id)
+                      return (
+                        <label
+                          key={s.id}
+                          className={cn(
+                            "flex cursor-pointer items-center gap-2.5 rounded px-2 py-1.5 hover:bg-muted",
+                            checked && "bg-muted/60"
+                          )}
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggle(s.id)}
+                            disabled={pending}
+                          />
+                          <span className="min-w-0 flex-1 truncate text-sm">
+                            {s.name}
+                          </span>
+                          <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                            {s.id.slice(0, 8)}…
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
+
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex justify-end gap-2">
-            <Button type="submit" disabled={pending}>
-              {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {pending ? "Saving…" : "Save"}
-            </Button>
             <Button
               type="button"
               variant="outline"
@@ -294,6 +437,10 @@ function EditKeyDialog({
               onClick={onClose}
             >
               Cancel
+            </Button>
+            <Button type="submit" disabled={pending}>
+              {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {pending ? "Saving…" : "Save"}
             </Button>
           </div>
         </form>

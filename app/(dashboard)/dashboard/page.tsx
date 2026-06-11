@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-8 max-w-5xl">
+    <div className="space-y-8 mx-auto max-w-5xl">
       <BlurFade>
         <div className="border-b pb-6">
           <h1 className="text-2xl font-bold">Dashboard</h1>

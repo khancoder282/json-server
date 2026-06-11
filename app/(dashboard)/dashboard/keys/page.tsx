@@ -22,7 +22,7 @@ export default async function KeyManagementPage({ searchParams }: Props) {
   ])
 
   return (
-    <div className="max-w-5xl space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8">
       <div className="flex items-center justify-between border-b pb-6">
         <div>
           <h1 className="text-2xl font-bold">Key Management</h1>

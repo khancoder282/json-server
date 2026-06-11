@@ -137,59 +137,6 @@
   }
 }
 
-/* ── CodeFlask editor (defaultTheme:false → themed here) ───────────────── */
-.code-flask .codeflask {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.5;
-}
-.code-flask .codeflask__textarea {
-  /* The highlighted <pre> sits on top; keep the textarea's own text invisible
-     so only the colored layer shows, with a visible caret. */
-  color: transparent;
-  caret-color: var(--foreground);
-}
-.code-flask .codeflask__lines {
-  color: var(--muted-foreground);
-  font-size: 13px;
-  line-height: 1.5;
-}
-/* Line-number gutter strip (CodeFlask paints it via ::before, hardcoded #eee) */
-.code-flask .codeflask--has-line-numbers::before {
-  background: var(--muted) !important;
-  border-right: 1px solid var(--border);
-}
-.code-flask .token.punctuation {
-  color: var(--muted-foreground);
-}
-.code-flask .token.property,
-.code-flask .token.string {
-  color: #15803d;
-}
-.code-flask .token.number {
-  color: #b45309;
-}
-.code-flask .token.boolean,
-.code-flask .token.keyword,
-.code-flask .token.null,
-.code-flask .token.constant {
-  color: #1d4ed8;
-}
-.dark .code-flask .token.property,
-.dark .code-flask .token.string {
-  color: #4ade80;
-}
-.dark .code-flask .token.number {
-  color: #fbbf24;
-}
-.dark .code-flask .token.boolean,
-.dark .code-flask .token.keyword,
-.dark .code-flask .token.null,
-.dark .code-flask .token.constant {
-  color: #60a5fa;
-}
 
 @keyframes gradient-pan {
   0% {

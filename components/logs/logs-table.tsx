@@ -1,8 +1,10 @@
 "use client"
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { type Log } from "@/lib/db/schema"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -19,7 +21,30 @@ import {
 } from "@/components/ui/dialog"
 import { Pagination } from "@/components/shared/pagination"
 import { SortableHeader } from "@/components/shared/sortable-header"
+import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
+
+function EditorSkeleton() {
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border p-4" style={{ height: 200 }}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton
+          key={i}
+          className="h-4 rounded"
+          style={{ width: `${[60, 80, 72, 55, 90][i]}%` }}
+        />
+      ))}
+    </div>
+  )
+}
+
+const MonacoJsonEditor = dynamic(
+  () =>
+    import("@/components/json/monaco-json-editor").then(
+      (m) => m.MonacoJsonEditor
+    ),
+  { ssr: false, loading: () => <EditorSkeleton /> }
+)
 
 interface Props {
   data: { rows: Log[]; total: number; page: number; limit: number }
@@ -28,6 +53,8 @@ interface Props {
 export function LogsTable({ data }: Props) {
   const { rows, total, page, limit } = data
   const [expandedLog, setExpandedLog] = useState<Log | null>(null)
+  const { resolvedTheme } = useTheme()
+  const monacoTheme = resolvedTheme === "dark" ? "dracula" : "vs"
 
   if (rows.length === 0) {
     return (
@@ -121,17 +148,23 @@ export function LogsTable({ data }: Props) {
               {expandedLog.requestBody && (
                 <div>
                   <p className="mb-1 font-medium">Request Body</p>
-                  <pre className="overflow-auto rounded bg-muted p-3 text-xs">
-                    {tryFormat(expandedLog.requestBody)}
-                  </pre>
+                  <MonacoJsonEditor
+                    value={tryFormat(expandedLog.requestBody)}
+                    readOnly
+                    monacoTheme={monacoTheme}
+                    height="200px"
+                  />
                 </div>
               )}
               {expandedLog.responseBody && (
                 <div>
                   <p className="mb-1 font-medium">Response Body</p>
-                  <pre className="overflow-auto rounded bg-muted p-3 text-xs">
-                    {tryFormat(expandedLog.responseBody)}
-                  </pre>
+                  <MonacoJsonEditor
+                    value={tryFormat(expandedLog.responseBody)}
+                    readOnly
+                    monacoTheme={monacoTheme}
+                    height="200px"
+                  />
                 </div>
               )}
             </div>
