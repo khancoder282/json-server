@@ -187,6 +187,17 @@ async function main() {
         ...(hasCron
           ? ["The cron process (`cron.js`) handles weekly log cleanup.", ""]
           : []),
+        "## Updating",
+        "",
+        "Each deploy is a fresh force-pushed snapshot, so `git pull` will report",
+        "diverged branches. Reset to the remote instead, then reload PM2:",
+        "",
+        "```sh",
+        "git fetch origin",
+        `git reset --hard origin/${branch}`,
+        "pm2 reload ecosystem.config.cjs",
+        "```",
+        "",
       ].join("\n")
     )
 
