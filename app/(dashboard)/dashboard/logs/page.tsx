@@ -22,7 +22,7 @@ export default async function LogManagementPage({ searchParams }: Props) {
 
   const data = await getLogsByUser(userId, {
     page: sp.page ? parseInt(sp.page) : 1,
-    limit: 20,
+    limit: 10,
     result: sp.result || undefined,
     action: sp.action || undefined,
     from: sp.from ? new Date(sp.from) : undefined,

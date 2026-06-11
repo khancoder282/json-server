@@ -43,10 +43,18 @@ export function LogsTable({ data }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead><SortableHeader column="createdAt">Time</SortableHeader></TableHead>
-              <TableHead><SortableHeader column="action">Action</SortableHeader></TableHead>
-              <TableHead><SortableHeader column="result">Result</SortableHeader></TableHead>
-              <TableHead><SortableHeader column="ip">IP</SortableHeader></TableHead>
+              <TableHead>
+                <SortableHeader column="createdAt">Time</SortableHeader>
+              </TableHead>
+              <TableHead>
+                <SortableHeader column="action">Action</SortableHeader>
+              </TableHead>
+              <TableHead>
+                <SortableHeader column="result">Result</SortableHeader>
+              </TableHead>
+              <TableHead>
+                <SortableHeader column="ip">IP</SortableHeader>
+              </TableHead>
               <TableHead>User Agent</TableHead>
               <TableHead className="text-right">Details</TableHead>
             </TableRow>
@@ -54,15 +62,17 @@ export function LogsTable({ data }: Props) {
           <TableBody>
             {rows.map((log) => (
               <TableRow key={log.id}>
-                <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
                   {new Date(log.createdAt).toLocaleString()}
                 </TableCell>
                 <TableCell>
-                  <code className="text-xs">{log.action}</code>
+                  <ActionLabel action={log.action} />
                 </TableCell>
                 <TableCell>
                   <Badge
-                    variant={log.result === "success" ? "secondary" : "destructive"}
+                    variant={
+                      log.result === "success" ? "secondary" : "destructive"
+                    }
                     className={cn("text-xs capitalize", {
                       "bg-green-700 text-green-50": log.result === "success",
                     })}
@@ -77,7 +87,11 @@ export function LogsTable({ data }: Props) {
                   {log.userAgent}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="outline" size="sm" onClick={() => setExpandedLog(log)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setExpandedLog(log)}
+                  >
                     View
                   </Button>
                 </TableCell>
@@ -96,7 +110,10 @@ export function LogsTable({ data }: Props) {
               <DialogTitle>Log Details</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 text-sm">
-              <Row label="Time" value={new Date(expandedLog.createdAt).toLocaleString()} />
+              <Row
+                label="Time"
+                value={new Date(expandedLog.createdAt).toLocaleString()}
+              />
               <Row label="Action" value={<code>{expandedLog.action}</code>} />
               <Row label="Result" value={expandedLog.result} />
               <Row label="IP" value={expandedLog.ip} />
@@ -140,4 +157,27 @@ function tryFormat(str: string) {
   } catch {
     return str
   }
+}
+
+// Color only the HTTP method in an action like "GET /api/json/{id}"; the URL
+// part keeps the muted style.
+const METHOD_COLOR: Record<string, string> = {
+  GET: "text-green-600 dark:text-green-400",
+  PUT: "text-amber-600 dark:text-amber-400",
+  POST: "text-blue-600 dark:text-blue-400",
+  DELETE: "text-red-600 dark:text-red-400",
+}
+
+function ActionLabel({ action }: { action: string }) {
+  const spaceIdx = action.indexOf(" ")
+  const method = spaceIdx === -1 ? action : action.slice(0, spaceIdx)
+  const rest = spaceIdx === -1 ? "" : action.slice(spaceIdx + 1)
+  return (
+    <code className="text-xs">
+      <span className={cn("font-semibold", METHOD_COLOR[method])}>
+        {method}
+      </span>
+      {rest && <span className="text-muted-foreground"> {rest}</span>}
+    </code>
+  )
 }

@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm"
 import { getApiKeyByKey, getLinkedStoreIds } from "@/lib/data/api-keys"
 import { insertLog } from "@/lib/data/logs"
 import { deepMerge } from "@/lib/utils/merge"
+import { selectByPath } from "@/lib/utils/json-path"
 import { checkRateLimit, rateLimitHeaders } from "@/lib/utils/rate-limit"
 
 function getIp(req: NextRequest) {
@@ -41,7 +42,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const action = `GET /api/json/${id}`
+  // Optional path selector, e.g. ?path=user[0].role.name — returns just that
+  // nested value from the JSON content instead of the whole object.
+  const path = new URL(req.url).searchParams.get("path")
+  const action = `GET /api/json/${id}${path ? `?path=${path}` : ""}`
 
   const [store] = await db
     .select()
@@ -53,6 +57,15 @@ export async function GET(
     const body = JSON.stringify({ error: "Not found" })
     await log(req, action, "error", null, null, body)
     return NextResponse.json({ error: "Not found" }, { status: 404 })
+  }
+
+  // Build the response payload from content, applying the path selector if any.
+  // Returns null when the path resolves to nothing (caller responds 404).
+  function buildPayload(): { ok: true; data: unknown } | { ok: false } {
+    const content = JSON.parse(store.content)
+    if (!path) return { ok: true, data: content }
+    const selected = selectByPath(content, path)
+    return selected.found ? { ok: true, data: selected.value } : { ok: false }
   }
 
   if (!store.isPublic) {
@@ -88,25 +101,46 @@ export async function GET(
     // ── Rate limit (private stores only — key required) ──
     const rl = checkRateLimit(apiKey.id)
     if (!rl.allowed) {
-      const body = JSON.stringify({ error: "Rate limit exceeded. Max 100 requests per minute per API key." })
+      const body = JSON.stringify({
+        error: "Rate limit exceeded. Max 100 requests per minute per API key.",
+      })
       await log(req, action, "error", store.userId, null, body)
       return NextResponse.json(
-        { error: "Rate limit exceeded. Max 100 requests per minute per API key." },
+        {
+          error:
+            "Rate limit exceeded. Max 100 requests per minute per API key.",
+        },
         { status: 429, headers: rateLimitHeaders(rl) }
       )
     }
 
-    const responseData = JSON.parse(store.content)
-    const resBody = JSON.stringify(responseData)
+    const payload = buildPayload()
+    if (!payload.ok) {
+      const body = JSON.stringify({ error: `Path not found: ${path}` })
+      await log(req, action, "error", store.userId, null, body)
+      return NextResponse.json(
+        { error: `Path not found: ${path}` },
+        { status: 404, headers: rateLimitHeaders(rl) }
+      )
+    }
+    const resBody = JSON.stringify(payload.data)
     await log(req, action, "success", store.userId, null, resBody)
-    return NextResponse.json(responseData, { headers: rateLimitHeaders(rl) })
+    return NextResponse.json(payload.data, { headers: rateLimitHeaders(rl) })
   }
 
   // Public store — no rate limit
-  const responseData = JSON.parse(store.content)
-  const body = JSON.stringify(responseData)
+  const payload = buildPayload()
+  if (!payload.ok) {
+    const body = JSON.stringify({ error: `Path not found: ${path}` })
+    await log(req, action, "error", store.userId, null, body)
+    return NextResponse.json(
+      { error: `Path not found: ${path}` },
+      { status: 404 }
+    )
+  }
+  const body = JSON.stringify(payload.data)
   await log(req, action, "success", store.userId, null, body)
-  return NextResponse.json(responseData)
+  return NextResponse.json(payload.data)
 }
 
 export async function PUT(
@@ -160,10 +194,14 @@ export async function PUT(
   // ── Rate limit ──────────────────────────────────────────
   const rl = checkRateLimit(apiKey.id)
   if (!rl.allowed) {
-    const body = JSON.stringify({ error: "Rate limit exceeded. Max 100 requests per minute per API key." })
+    const body = JSON.stringify({
+      error: "Rate limit exceeded. Max 100 requests per minute per API key.",
+    })
     await log(req, action, "error", store.userId, null, body)
     return NextResponse.json(
-      { error: "Rate limit exceeded. Max 100 requests per minute per API key." },
+      {
+        error: "Rate limit exceeded. Max 100 requests per minute per API key.",
+      },
       { status: 429, headers: rateLimitHeaders(rl) }
     )
   }

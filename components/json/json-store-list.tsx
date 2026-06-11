@@ -24,8 +24,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu"
-import { Check, Copy, MoreVertical } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { CodeEditor } from "@/components/json/code-editor"
+import {
+  Check,
+  Copy,
+  Eye,
+  FlaskConical,
+  MoreVertical,
+  SquarePen,
+  Trash2,
+} from "lucide-react"
 import dayjs from "dayjs"
+import { cn, formatSize } from "@/lib/utils"
 
 interface Props {
   data: { rows: JsonStore[]; total: number; page: number; limit: number }
@@ -36,6 +52,7 @@ export function JsonStoreList({ data }: Props) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [viewStore, setViewStore] = useState<JsonStore | null>(null)
 
   function handleDelete(id: string) {
     startTransition(async () => {
@@ -72,6 +89,7 @@ export function JsonStoreList({ data }: Props) {
               <TableHead>
                 <SortableHeader column="isPublic">Visibility</SortableHeader>
               </TableHead>
+              <TableHead>Size</TableHead>
               <TableHead>
                 <SortableHeader column="createdAt">Created</SortableHeader>
               </TableHead>
@@ -95,9 +113,19 @@ export function JsonStoreList({ data }: Props) {
                   </button>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={store.isPublic ? "secondary" : "outline"}>
+                  <Badge
+                    className={cn(
+                      "border-transparent",
+                      store.isPublic
+                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                        : "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400"
+                    )}
+                  >
                     {store.isPublic ? "Public" : "Private"}
                   </Badge>
+                </TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">
+                  {formatSize(store.content)}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {dayjs(store.createdAt).format("DD MMM YYYY")}
@@ -113,10 +141,26 @@ export function JsonStoreList({ data }: Props) {
                     />
                     <DropdownMenuContent align="end">
                       <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={() => setViewStore(store)}>
+                          <Eye className="size-4" />
+                          View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          nativeButton={false}
+                          render={
+                            <Link
+                              href={`/dashboard/playground?store=${store.id}`}
+                            >
+                              <FlaskConical className="size-4" />
+                              Playground
+                            </Link>
+                          }
+                        />
                         <DropdownMenuItem
                           nativeButton={false}
                           render={
                             <Link href={`/dashboard/json/${store.id}/edit`}>
+                              <SquarePen className="size-4" />
                               Edit
                             </Link>
                           }
@@ -127,7 +171,12 @@ export function JsonStoreList({ data }: Props) {
                         >
                           <ConfirmDialog
                             loading={pending}
-                            trigger={<>Delete</>}
+                            trigger={
+                              <span className="flex items-center gap-2">
+                                <Trash2 className="size-4" />
+                                Delete
+                              </span>
+                            }
                             title="Delete JSON Store"
                             description="This will permanently delete this JSON store and remove it from all API keys."
                             onConfirm={() => handleDelete(store.id)}
@@ -143,6 +192,36 @@ export function JsonStoreList({ data }: Props) {
         </Table>
       </div>
       <Pagination page={page} total={total} limit={limit} />
+
+      {/* Lazy quick-view dialog — editor only mounts when a store is opened */}
+      {viewStore && (
+        <Dialog open onOpenChange={(o) => !o && setViewStore(null)}>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <span className="truncate font-mono text-sm">
+                  {viewStore.id}
+                </span>
+                <Badge
+                  className={cn(
+                    "border-transparent",
+                    viewStore.isPublic
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                      : "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400"
+                  )}
+                >
+                  {formatSize(viewStore.content)}
+                </Badge>
+              </DialogTitle>
+            </DialogHeader>
+            <CodeEditor
+              value={JSON.stringify(JSON.parse(viewStore.content), null, 2)}
+              readOnly
+              height="60dvh"
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 }

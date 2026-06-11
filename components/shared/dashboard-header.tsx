@@ -3,6 +3,7 @@ import { useTransition } from "react"
 import { useTheme } from "@/components/theme-provider"
 import { signOutAction } from "@/lib/actions/auth"
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +24,7 @@ export function DashboardHeader() {
   }
 
   return (
-    <header className="md:hidden border-b bg-background px-4 py-3 flex items-center justify-end gap-2">
+    <header className="flex items-center justify-end gap-2 border-b bg-background px-4 py-3 md:hidden">
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -52,10 +53,19 @@ export function DashboardHeader() {
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Button variant="outline" size="sm" disabled={pending} onClick={handleSignOut}>
-        {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {pending ? "Signing out…" : "Sign out"}
-      </Button>
+      <ConfirmDialog
+        trigger={
+          <Button variant="outline" size="sm" disabled={pending}>
+            {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {pending ? "Signing out…" : "Sign out"}
+          </Button>
+        }
+        title="Sign out?"
+        description="You'll need to sign in again to access your dashboard."
+        onConfirm={handleSignOut}
+        loading={pending}
+        textConfirm="Sign out"
+      />
     </header>
   )
 }

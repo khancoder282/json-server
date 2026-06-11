@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Human-readable byte size of a string's UTF-8 content (works on server & client).
+export function formatSize(content: string): string {
+  const bytes = new TextEncoder().encode(content).length
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 // Display-only masking: json-server-a1b2...f9e8
 export function maskApiKey(key: string): string {
   const prefix = "json-server-"

@@ -3,6 +3,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTransition } from "react"
 import { signOutAction } from "@/lib/actions/auth"
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { cn } from "@/lib/utils"
 import { LogOut, Palette, KeyRound, TriangleAlert, User } from "lucide-react"
 
@@ -57,14 +58,22 @@ export default function SettingsLayout({
               </Link>
             )
           })}
-          <button
-            onClick={handleSignOut}
-            disabled={pending}
-            className="mt-1 flex items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-          >
-            <LogOut className="size-4 shrink-0" />
-            {pending ? "Signing out…" : "Sign out"}
-          </button>
+          <ConfirmDialog
+            trigger={
+              <button
+                disabled={pending}
+                className="mt-1 flex items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+              >
+                <LogOut className="size-4 shrink-0" />
+                {pending ? "Signing out…" : "Sign out"}
+              </button>
+            }
+            title="Sign out?"
+            description="You'll need to sign in again to access your dashboard."
+            onConfirm={handleSignOut}
+            loading={pending}
+            textConfirm="Sign out"
+          />
         </nav>
         <div className="min-w-0 flex-1">{children}</div>
       </div>

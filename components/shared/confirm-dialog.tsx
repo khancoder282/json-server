@@ -18,6 +18,7 @@ interface ConfirmDialogProps {
   onConfirm: () => void
   destructive?: boolean
   loading?: boolean
+  textConfirm?: string
 }
 
 export function ConfirmDialog({
@@ -27,6 +28,7 @@ export function ConfirmDialog({
   onConfirm,
   destructive = true,
   loading = false,
+  textConfirm = "Confirm",
 }: ConfirmDialogProps) {
   const [open, setOpen] = useState(false)
 
@@ -61,7 +63,7 @@ export function ConfirmDialog({
                   : ""
               }
             >
-              {loading ? "Loading..." : "Confirm"}
+              {loading ? "Loading..." : textConfirm}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

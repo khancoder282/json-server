@@ -7,11 +7,24 @@ const LIMIT = 10
 
 type SortCol = "createdAt" | "isPublic"
 
+// Lightweight list of every store the user owns — for the Playground switcher.
+export async function getAllJsonStoresByUser(userId: string) {
+  return db
+    .select({
+      id: jsonStores.id,
+      name: jsonStores.name,
+      isPublic: jsonStores.isPublic,
+    })
+    .from(jsonStores)
+    .where(eq(jsonStores.userId, userId))
+    .orderBy(desc(jsonStores.createdAt))
+}
+
 export async function getJsonStoresByUser(
   userId: string,
   page = 1,
   sort: SortCol = "createdAt",
-  order: "asc" | "desc" = "desc",
+  order: "asc" | "desc" = "desc"
 ) {
   const offset = (page - 1) * LIMIT
   const col = sort === "isPublic" ? jsonStores.isPublic : jsonStores.createdAt

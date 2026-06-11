@@ -2,7 +2,7 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { type JsonStore } from "@/lib/db/schema"
-import { maskApiKey } from "@/lib/utils"
+import { cn, maskApiKey } from "@/lib/utils"
 import { deleteApiKeyAction, updateApiKeyAction } from "@/lib/actions/api-keys"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,7 +19,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +32,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Check, Copy, Loader2, MoreVertical } from "lucide-react"
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Check,
+  Copy,
+  Loader2,
+  MoreVertical,
+  SquarePen,
+  Trash2,
+} from "lucide-react"
 
 interface ApiKeyWithCount {
   id: string
@@ -79,9 +93,15 @@ export function ApiKeyList({ data, stores }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>Key</TableHead>
-              <TableHead><SortableHeader column="permissions">Permissions</SortableHeader></TableHead>
+              <TableHead>
+                <SortableHeader column="permissions">
+                  Permissions
+                </SortableHeader>
+              </TableHead>
               <TableHead>Linked Stores</TableHead>
-              <TableHead><SortableHeader column="createdAt">Created</SortableHeader></TableHead>
+              <TableHead>
+                <SortableHeader column="createdAt">Created</SortableHeader>
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -91,10 +111,10 @@ export function ApiKeyList({ data, stores }: Props) {
                 <TableCell>
                   <button
                     onClick={() => handleCopy(key.key, key.id)}
-                    className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {copiedId === key.id ? (
-                      <Check className="size-3 text-green-500 shrink-0" />
+                      <Check className="size-3 shrink-0 text-green-500" />
                     ) : (
                       <Copy className="size-3 shrink-0" />
                     )}
@@ -103,11 +123,27 @@ export function ApiKeyList({ data, stores }: Props) {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    {key.permissions.split(",").map((p) => (
-                      <Badge key={p} variant="secondary" className="text-xs uppercase">
-                        {p}
-                      </Badge>
-                    ))}
+                    {key.permissions.split(",").map((p) => {
+                      const isGet = p === "get"
+                      return (
+                        <Badge
+                          key={p}
+                          className={cn(
+                            "gap-1 border-transparent text-xs uppercase",
+                            isGet
+                              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                              : "bg-amber-500/15 text-amber-700 dark:text-amber-500"
+                          )}
+                        >
+                          {isGet ? (
+                            <ArrowDownToLine className="size-3" />
+                          ) : (
+                            <ArrowUpFromLine className="size-3" />
+                          )}
+                          {p}
+                        </Badge>
+                      )
+                    })}
                   </div>
                 </TableCell>
                 <TableCell>{key.linkedCount}</TableCell>
@@ -126,12 +162,21 @@ export function ApiKeyList({ data, stores }: Props) {
                     <DropdownMenuContent align="end">
                       <DropdownMenuGroup>
                         <DropdownMenuItem onClick={() => setEditKey(key)}>
+                          <SquarePen className="size-4" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem variant="destructive" closeOnClick={false}>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          closeOnClick={false}
+                        >
                           <ConfirmDialog
                             loading={pending}
-                            trigger={<>Delete</>}
+                            trigger={
+                              <span className="flex items-center gap-2">
+                                <Trash2 className="size-4" />
+                                Delete
+                              </span>
+                            }
                             title="Delete API Key"
                             description="This will permanently delete this API key."
                             onConfirm={() => handleDelete(key.id)}
@@ -220,7 +265,10 @@ function EditKeyDialog({
               <Label>Linked JSON Stores</Label>
               <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-2">
                 {stores.map((s) => (
-                  <label key={s.id} className="flex cursor-pointer items-center gap-2">
+                  <label
+                    key={s.id}
+                    className="flex cursor-pointer items-center gap-2"
+                  >
                     <Checkbox
                       name="storeIds"
                       value={s.id}
@@ -239,7 +287,12 @@ function EditKeyDialog({
               {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {pending ? "Saving…" : "Save"}
             </Button>
-            <Button type="button" variant="outline" disabled={pending} onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending}
+              onClick={onClose}
+            >
               Cancel
             </Button>
           </div>
