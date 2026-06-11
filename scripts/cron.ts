@@ -4,10 +4,12 @@ import { lt } from "drizzle-orm"
 import cron from "node-cron"
 import * as schema from "../lib/db/schema"
 
-const connection = await mysql.createConnection(
+// createPool is synchronous (no top-level await) so the bundled cron.js stays
+// a plain module PM2 can require() — and a pool suits a long-running process.
+const pool = mysql.createPool(
   process.env.DATABASE_URL ?? "mysql://root:root@localhost:3303/json-server",
 )
-const db = drizzle(connection, { schema, mode: "default" })
+const db = drizzle(pool, { schema, mode: "default" })
 
 cron.schedule("0 0 * * 0", async () => {
   const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)

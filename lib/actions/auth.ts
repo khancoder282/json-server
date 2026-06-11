@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { users, verificationTokens } from "@/lib/db/schema"
 import { getUserByEmail, getVerificationToken } from "@/lib/data/users"
-import { resend } from "@/lib/email/resend"
+import { sendEmail } from "@/lib/email/resend"
 import { verifyEmailTemplate } from "@/lib/email/templates/verify-email"
 import { signIn, signOut } from "@/auth"
 
@@ -16,8 +16,14 @@ const registerSchema = z.object({
   password: z.string().min(8),
 })
 
-async function sendVerificationEmail(userId: string, email: string, name: string) {
-  await db.delete(verificationTokens).where(eq(verificationTokens.userId, userId))
+async function sendVerificationEmail(
+  userId: string,
+  email: string,
+  name: string
+) {
+  await db
+    .delete(verificationTokens)
+    .where(eq(verificationTokens.userId, userId))
 
   const token = uuidv4().replace(/-/g, "") + uuidv4().replace(/-/g, "")
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
@@ -29,9 +35,15 @@ async function sendVerificationEmail(userId: string, email: string, name: string
     expiresAt,
   })
 
-  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`
-  await resend.emails.send({
-    from: "JSON Server <onboarding@resend.dev>",
+  // Read at runtime, not build time: NEXT_PUBLIC_* is inlined into the bundle
+  // at build, so it would freeze to whatever URL was set when `bun run deploy`
+  // ran. AUTH_URL (the canonical app URL) is a normal env var read at runtime.
+  const baseUrl =
+    process.env.AUTH_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "http://localhost:3000"
+  const verifyUrl = `${baseUrl}/verify-email?token=${token}`
+  await sendEmail({
     to: email,
     subject: "Verify your JSON Server account",
     html: verifyEmailTemplate(name, verifyUrl),
@@ -70,7 +82,17 @@ export async function registerAction(formData: FormData) {
     emailVerified: false,
   })
 
-  await sendVerificationEmail(userId, email, name)
+  try {
+    await sendVerificationEmail(userId, email, name)
+  } catch (err) {
+    console.error("[register] verification email failed:", err)
+    return {
+      success: false,
+      error:
+        "Account created, but the verification email couldn't be sent. Use 'Resend email' on the next page or contact support.",
+      email,
+    }
+  }
 
   return { success: true, email }
 }
@@ -78,9 +100,15 @@ export async function registerAction(formData: FormData) {
 export async function resendVerificationAction(email: string) {
   const user = await getUserByEmail(email)
   if (!user) return { success: false, error: "User not found" }
-  if (user.emailVerified) return { success: false, error: "Email already verified" }
+  if (user.emailVerified)
+    return { success: false, error: "Email already verified" }
 
-  await sendVerificationEmail(user.id, user.email, user.name)
+  try {
+    await sendVerificationEmail(user.id, user.email, user.name)
+  } catch (err) {
+    console.error("[resend] verification email failed:", err)
+    return { success: false, error: "Failed to send verification email" }
+  }
   return { success: true }
 }
 
@@ -91,7 +119,10 @@ export async function verifyEmailAction(token: string) {
     return { success: false, error: "Token expired" }
   }
 
-  await db.update(users).set({ emailVerified: true }).where(eq(users.id, row.userId))
+  await db
+    .update(users)
+    .set({ emailVerified: true })
+    .where(eq(users.id, row.userId))
   await db.delete(verificationTokens).where(eq(verificationTokens.id, row.id))
 
   return { success: true }

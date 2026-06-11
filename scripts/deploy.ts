@@ -95,9 +95,11 @@ async function main() {
     // 3. The cron job (weekly log cleanup) imports mysql2/drizzle/node-cron +
     //    the DB schema — none of which are in the pruned standalone
     //    node_modules. Bundle it into a single self-contained cron.js.
+    // --format=cjs: PM2's bun fork container loads the entry with require(),
+    // which can't load an async/ESM module — so emit CommonJS like server.js.
     const hasCron = existsSync(CRON_SRC)
     if (hasCron)
-      await $`bun build ${CRON_SRC} --target=bun --outfile=${join(stage, "cron.js")}`.quiet()
+      await $`bun build ${CRON_SRC} --target=bun --format=cjs --outfile=${join(stage, "cron.js")}`.quiet()
 
     // Slim the standalone package.json down to a clean start script — its
     // dependencies are irrelevant since node_modules is already bundled.
