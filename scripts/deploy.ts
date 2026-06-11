@@ -24,6 +24,7 @@ const DEFAULT_BRANCH = "deploy"
 // pruned node_modules bundled in — but NOT the static assets or public/, which
 // Next expects to be copied alongside the server. We assemble all three.
 const STANDALONE_DIR = ".next/standalone"
+const CRON_SRC = "scripts/cron.ts"
 
 function fail(message: string): never {
   console.error(`✖ ${message}`)
@@ -91,6 +92,13 @@ async function main() {
     if (existsSync("public"))
       await cp("public", join(stage, "public"), { recursive: true })
 
+    // 3. The cron job (weekly log cleanup) imports mysql2/drizzle/node-cron +
+    //    the DB schema — none of which are in the pruned standalone
+    //    node_modules. Bundle it into a single self-contained cron.js.
+    const hasCron = existsSync(CRON_SRC)
+    if (hasCron)
+      await $`bun build ${CRON_SRC} --target=bun --outfile=${join(stage, "cron.js")}`.quiet()
+
     // Slim the standalone package.json down to a clean start script — its
     // dependencies are irrelevant since node_modules is already bundled.
     const pkg = (await Bun.file(
@@ -115,6 +123,41 @@ async function main() {
       ) + "\n"
     )
 
+    // PM2 process config. Must be .cjs: package.json is type:module, so a .js
+    // file with module.exports would be parsed as ESM and fail. Secrets + PORT
+    // come from a .env placed next to server.js — Bun auto-loads it at startup.
+    const appName = pkg.name ?? "json-server"
+    // exec_mode "fork": cluster mode needs node's cluster module; bun uses fork.
+    const pm2App = (name: string, script: string) =>
+      [
+        "    {",
+        `      name: "${name}",`,
+        `      script: "${script}",`,
+        '      interpreter: "bun",',
+        "      cwd: __dirname,",
+        "      instances: 1,",
+        '      exec_mode: "fork",',
+        "      autorestart: true,",
+        '      env: { NODE_ENV: "production" },',
+        "    },",
+      ].join("\n")
+    const apps = [pm2App(appName, "server.js")]
+    if (hasCron) apps.push(pm2App(`${appName}-cron`, "cron.js"))
+    await Bun.write(
+      join(stage, "ecosystem.config.cjs"),
+      [
+        "// PM2 config for the standalone Next.js server (+ weekly cron).",
+        "//   pm2 start ecosystem.config.cjs",
+        "// Provide env via a .env file next to server.js (Bun auto-loads it).",
+        "module.exports = {",
+        "  apps: [",
+        apps.join("\n"),
+        "  ],",
+        "}",
+        "",
+      ].join("\n")
+    )
+
     const sha = (await $`git rev-parse --short HEAD`.text()).trim()
     const date = new Date().toISOString()
     await Bun.write(
@@ -125,12 +168,25 @@ async function main() {
         `- Source: \`${currentBranch}\` @ \`${sha}\``,
         `- Built: ${date}`,
         "",
-        "Self-contained — no install needed. Provide env vars and run:",
+        "Self-contained — no install needed. Put your secrets in a `.env` file",
+        "next to `server.js` (Bun auto-loads it; set `PORT` there too).",
+        "",
+        "Run the web server directly:",
         "",
         "```sh",
-        "PORT=3000 bun server.js   # or: bun run start",
+        "bun server.js        # or: bun run start",
         "```",
         "",
+        "Run with PM2 (requires `bun` in PATH on the server):",
+        "",
+        "```sh",
+        "pm2 start ecosystem.config.cjs   # starts web server + weekly cron",
+        "pm2 save",
+        "```",
+        "",
+        ...(hasCron
+          ? ["The cron process (`cron.js`) handles weekly log cleanup.", ""]
+          : []),
       ].join("\n")
     )
 
