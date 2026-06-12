@@ -16,22 +16,22 @@ const features = [
   {
     title: "JSON Stores",
     desc: "Create and manage JSON data stores with a built-in code editor. Toggle public or private visibility per store.",
-    light: "frame-6-json-editor-light.webp",
-    dark: "frame-6-json-editor-dark.webp",
+    light: "frame-5-json-editor-light.webp",
+    dark: "frame-5-json-editor-dark.webp",
     alt: "JSON Store editor",
   },
   {
     title: "API Keys",
     desc: "Issue scoped API keys with granular GET/PUT permissions, linked to specific JSON stores.",
-    light: "frame-7-keys-light.webp",
-    dark: "frame-7-keys-dark.webp",
+    light: "frame-6-keys-light.webp",
+    dark: "frame-6-keys-dark.webp",
     alt: "API key management",
   },
   {
     title: "Access Logs",
     desc: "Track every API call with detailed logs — IP, user agent, request and response bodies.",
-    light: "frame-8-logs-light.webp",
-    dark: "frame-8-logs-dark.webp",
+    light: "frame-7-logs-light.webp",
+    dark: "frame-7-logs-dark.webp",
     alt: "Access logs",
   },
 ]
@@ -41,24 +41,24 @@ const steps = [
     step: "01",
     title: "Create a JSON Store",
     desc: "Use the built-in code editor to define your JSON structure. Toggle public or private visibility.",
-    light: "frame-9-create-store-light.webp",
-    dark: "frame-9-create-store-dark.webp",
+    light: "frame-8-create-store-light.webp",
+    dark: "frame-8-create-store-dark.webp",
     alt: "Create JSON store",
   },
   {
     step: "02",
     title: "Generate an API Key",
     desc: "Issue a scoped key with GET or PUT permissions and link it to the stores you want to expose.",
-    light: "frame-10-keys-light.webp",
-    dark: "frame-10-keys-dark.webp",
+    light: "frame-9-keys-light.webp",
+    dark: "frame-9-keys-dark.webp",
     alt: "Generate API key",
   },
   {
     step: "03",
     title: "Integrate anywhere",
     desc: "Call GET /api/json/{id} from any app. Use PUT to deep-merge updates into your store.",
-    light: "frame-11-integration-light.webp",
-    dark: "frame-11-integration-dark.webp",
+    light: "frame-10-integration-light.webp",
+    dark: "frame-10-integration-dark.webp",
     alt: "API integration",
   },
 ]
@@ -77,7 +77,7 @@ export default async function HomePage() {
           {isLoggedIn ? (
             <>
               <Link
-                href="/dashboard"
+                href="/dashboard/json"
                 className={cn(
                   buttonVariants({ variant: "outline", size: "sm" })
                 )}
@@ -155,7 +155,7 @@ export default async function HomePage() {
             <div className="relative flex flex-wrap justify-center gap-3">
               {isLoggedIn ? (
                 <Link
-                  href="/dashboard"
+                  href="/dashboard/json"
                   className={cn(buttonVariants({ size: "lg" }))}
                 >
                   Go to Dashboard
@@ -189,14 +189,14 @@ export default async function HomePage() {
                     <div className="size-3 rounded-full bg-green-400/80" />
                   </div>
                   <div className="mx-auto max-w-xs flex-1 rounded-md bg-background/70 px-3 py-1 text-center font-mono text-xs text-muted-foreground">
-                    app.json-server.com/dashboard
+                    app.json-server.com/dashboard/json
                   </div>
                 </div>
                 <div className="relative aspect-[16/9]">
                   <ThemedImage
                     lightSrc="/screenshots/frame-1-hero-light.webp"
                     darkSrc="/screenshots/frame-1-hero-dark.webp"
-                    alt="JSON Server dashboard"
+                    alt="JSON Server"
                     fill
                     priority
                     className="object-cover object-top"
@@ -361,7 +361,7 @@ export default async function HomePage() {
             <div className="flex flex-wrap justify-center gap-3">
               {isLoggedIn ? (
                 <Link
-                  href="/dashboard"
+                  href="/dashboard/json"
                   className={cn(buttonVariants({ size: "lg" }))}
                 >
                   Go to Dashboard
@@ -450,18 +450,27 @@ export default async function HomePage() {
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {[
-                    "Next.js 15", "React 19", "TypeScript",
-                    "Tailwind CSS v4", "shadcn/ui",
-                    "Drizzle ORM", "MySQL",
-                    "NextAuth v5", "Resend",
-                    "Bun", "Motion",
-                  ].map((tech) => (
-                    <span
-                      key={tech}
-                      className="rounded-full border bg-muted/40 px-3.5 py-1 text-xs font-medium text-muted-foreground"
+                    { label: "Next.js 15",      href: "https://nextjs.org" },
+                    { label: "React 19",         href: "https://react.dev" },
+                    { label: "TypeScript",       href: "https://www.typescriptlang.org" },
+                    { label: "Tailwind CSS v4",  href: "https://tailwindcss.com" },
+                    { label: "shadcn/ui",        href: "https://ui.shadcn.com" },
+                    { label: "Drizzle ORM",      href: "https://orm.drizzle.team" },
+                    { label: "MySQL",            href: "https://www.mysql.com" },
+                    { label: "NextAuth v5",      href: "https://authjs.dev" },
+                    { label: "Resend",           href: "https://resend.com" },
+                    { label: "Bun",              href: "https://bun.sh" },
+                    { label: "Motion",           href: "https://motion.dev" },
+                  ].map(({ label, href }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-full border bg-muted/40 px-3.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
                     >
-                      {tech}
-                    </span>
+                      {label}
+                    </a>
                   ))}
                 </div>
               </div>

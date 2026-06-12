@@ -10,19 +10,21 @@ mkdirSync(OUT, { recursive: true })
 const EMAIL = "datakcoder282@gmail.com"
 const PASSWORD = "Demo@123"
 
-// Pages to capture: [route, base-filename]
+// frame-1  : hero (json list — first page after login)
+// frame-2-4: carousel slides
+// frame-5-7: features section
+// frame-8-10: "how it works" steps
 const pages: [string, string][] = [
-  ["/dashboard",          "frame-1-hero"],
-  ["/dashboard",          "frame-2-dashboard"],
-  ["/dashboard/json",     "frame-3-json"],
-  ["/dashboard/keys",     "frame-4-keys"],
-  ["/dashboard/logs",     "frame-5-logs"],
-  ["/dashboard/json/new", "frame-6-json-editor"],
-  ["/dashboard/keys",     "frame-7-keys"],
-  ["/dashboard/logs",     "frame-8-logs"],
-  ["/dashboard/json/new", "frame-9-create-store"],
-  ["/dashboard/keys",     "frame-10-keys"],
-  ["/dashboard/json",     "frame-11-integration"],
+  ["/dashboard/json",     "frame-1-hero"],
+  ["/dashboard/json",     "frame-2-json"],
+  ["/dashboard/keys",     "frame-3-keys"],
+  ["/dashboard/logs",     "frame-4-logs"],
+  ["/dashboard/json/new", "frame-5-json-editor"],
+  ["/dashboard/keys",     "frame-6-keys"],
+  ["/dashboard/logs",     "frame-7-logs"],
+  ["/dashboard/json/new", "frame-8-create-store"],
+  ["/dashboard/keys",     "frame-9-keys"],
+  ["/dashboard/json",     "frame-10-integration"],
 ]
 
 async function shot(page: Page, url: string, file: string) {
@@ -48,7 +50,7 @@ async function main() {
   await page.fill('[name="email"]', EMAIL)
   await page.fill('[name="password"]', PASSWORD)
   await page.click('[type="submit"]')
-  await page.waitForURL(`${BASE}/dashboard`, { timeout: 20000 })
+  await page.waitForURL(`${BASE}/dashboard/json`, { timeout: 20000 })
   await page.waitForLoadState("networkidle")
   console.log("✓ Logged in\n")
 

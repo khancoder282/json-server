@@ -1,26 +1,17 @@
 "use client"
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { ChevronLeft, ChevronRight, Database, Key, LayoutDashboard, ScrollText } from "lucide-react"
+import { ChevronLeft, ChevronRight, Database, Key, ScrollText } from "lucide-react"
 import { ThemedImage } from "@/components/shared/themed-image"
 import { cn } from "@/lib/utils"
 
 const slides = [
   {
-    id: "dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    light: "frame-2-dashboard-light.webp",
-    dark:  "frame-2-dashboard-dark.webp",
-    alt: "Dashboard overview",
-    urlSlug: "dashboard",
-  },
-  {
     id: "editor",
     label: "JSON Editor",
     icon: Database,
-    light: "frame-3-json-light.webp",
-    dark:  "frame-3-json-dark.webp",
+    light: "frame-2-json-light.webp",
+    dark:  "frame-2-json-dark.webp",
     alt: "JSON store editor",
     urlSlug: "dashboard/json",
   },
@@ -28,8 +19,8 @@ const slides = [
     id: "keys",
     label: "API Keys",
     icon: Key,
-    light: "frame-4-keys-light.webp",
-    dark:  "frame-4-keys-dark.webp",
+    light: "frame-3-keys-light.webp",
+    dark:  "frame-3-keys-dark.webp",
     alt: "API key management",
     urlSlug: "dashboard/keys",
   },
@@ -37,8 +28,8 @@ const slides = [
     id: "logs",
     label: "Logs",
     icon: ScrollText,
-    light: "frame-5-logs-light.webp",
-    dark:  "frame-5-logs-dark.webp",
+    light: "frame-4-logs-light.webp",
+    dark:  "frame-4-logs-dark.webp",
     alt: "Access logs",
     urlSlug: "dashboard/logs",
   },
