@@ -9,6 +9,23 @@ import { deepMerge } from "@/lib/utils/merge"
 import { selectByPath } from "@/lib/utils/json-path"
 import { checkRateLimit, rateLimitHeaders } from "@/lib/utils/rate-limit"
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, PUT, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS })
+}
+
+function json(body: unknown, init?: ResponseInit) {
+  const headers = new Headers(init?.headers)
+  Object.entries(CORS).forEach(([k, v]) => headers.set(k, v))
+  headers.set("Content-Type", "application/json")
+  return new NextResponse(JSON.stringify(body), { ...init, headers })
+}
+
 function getIp(req: NextRequest) {
   return req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown"
 }
@@ -79,7 +96,7 @@ export async function GET(
   if (!store) {
     const body = JSON.stringify({ error: "Not found" })
     await log(req, action, "error", null, null, body)
-    return NextResponse.json({ error: "Not found" }, { status: 404 })
+    return json({ error: "Not found" }, { status: 404 })
   }
 
   const { buildPayload } = store
@@ -93,7 +110,7 @@ export async function GET(
     if (!bearerKey) {
       const body = JSON.stringify({ error: "Unauthorized" })
       await log(req, action, "error", store.userId, null, body)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const apiKey = await getApiKeyByKey(bearerKey)
@@ -104,20 +121,20 @@ export async function GET(
     ) {
       const body = JSON.stringify({ error: "Unauthorized" })
       await log(req, action, "error", store.userId, null, body)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return json({ error: "Unauthorized" }, { status: 401 })
     }
 
     if (apiKey.isLocked) {
       const body = JSON.stringify({ error: "API key is locked" })
       await log(req, action, "error", store.userId, null, body)
-      return NextResponse.json({ error: "API key is locked" }, { status: 401 })
+      return json({ error: "API key is locked" }, { status: 401 })
     }
 
     const linkedIds = await getLinkedStoreIds(apiKey.id)
     if (!linkedIds.includes(store.id)) {
       const body = JSON.stringify({ error: "Unauthorized" })
       await log(req, action, "error", store.userId, null, body)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // ── Rate limit (private stores only — key required) ──
@@ -127,7 +144,7 @@ export async function GET(
         error: "Rate limit exceeded. Max 100 requests per minute per API key.",
       })
       await log(req, action, "error", store.userId, null, body)
-      return NextResponse.json(
+      return json(
         {
           error:
             "Rate limit exceeded. Max 100 requests per minute per API key.",
@@ -140,14 +157,14 @@ export async function GET(
     if (!payload.ok) {
       const body = JSON.stringify({ error: `Path not found: ${path}` })
       await log(req, action, "error", store.userId, null, body)
-      return NextResponse.json(
+      return json(
         { error: `Path not found: ${path}` },
         { status: 404, headers: rateLimitHeaders(rl) }
       )
     }
     const resBody = JSON.stringify(payload.data)
     await log(req, action, "success", store.userId, null, resBody)
-    return NextResponse.json(payload.data, { headers: rateLimitHeaders(rl) })
+    return json(payload.data, { headers: rateLimitHeaders(rl) })
   }
 
   // Public store — no rate limit
@@ -155,14 +172,14 @@ export async function GET(
   if (!payload.ok) {
     const body = JSON.stringify({ error: `Path not found: ${path}` })
     await log(req, action, "error", store.userId, null, body)
-    return NextResponse.json(
+    return json(
       { error: `Path not found: ${path}` },
       { status: 404 }
     )
   }
   const body = JSON.stringify(payload.data)
   await log(req, action, "success", store.userId, null, body)
-  return NextResponse.json(payload.data)
+  return json(payload.data)
 }
 
 export async function PUT(
@@ -180,7 +197,7 @@ export async function PUT(
   if (!bearerKey) {
     const body = JSON.stringify({ error: "Unauthorized" })
     await log(req, action, "error", null, null, body)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return json({ error: "Unauthorized" }, { status: 401 })
   }
 
   const [store] = await db
@@ -192,7 +209,7 @@ export async function PUT(
   if (!store) {
     const body = JSON.stringify({ error: "Not found" })
     await log(req, action, "error", null, null, body)
-    return NextResponse.json({ error: "Not found" }, { status: 404 })
+    return json({ error: "Not found" }, { status: 404 })
   }
 
   const apiKey = await getApiKeyByKey(bearerKey)
@@ -203,20 +220,20 @@ export async function PUT(
   ) {
     const body = JSON.stringify({ error: "Unauthorized" })
     await log(req, action, "error", store.userId, null, body)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return json({ error: "Unauthorized" }, { status: 401 })
   }
 
   if (apiKey.isLocked) {
     const body = JSON.stringify({ error: "API key is locked" })
     await log(req, action, "error", store.userId, null, body)
-    return NextResponse.json({ error: "API key is locked" }, { status: 401 })
+    return json({ error: "API key is locked" }, { status: 401 })
   }
 
   const linkedIds = await getLinkedStoreIds(apiKey.id)
   if (!linkedIds.includes(store.id)) {
     const body = JSON.stringify({ error: "Unauthorized" })
     await log(req, action, "error", store.userId, null, body)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return json({ error: "Unauthorized" }, { status: 401 })
   }
 
   // ── Rate limit ──────────────────────────────────────────
@@ -226,7 +243,7 @@ export async function PUT(
       error: "Rate limit exceeded. Max 100 requests per minute per API key.",
     })
     await log(req, action, "error", store.userId, null, body)
-    return NextResponse.json(
+    return json(
       {
         error: "Rate limit exceeded. Max 100 requests per minute per API key.",
       },
@@ -242,7 +259,7 @@ export async function PUT(
   } catch {
     const body = JSON.stringify({ error: "Invalid JSON body" })
     await log(req, action, "error", store.userId, null, body)
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    return json({ error: "Invalid JSON body" }, { status: 400 })
   }
 
   const existing = JSON.parse(store.content) as Record<string, unknown>
@@ -257,5 +274,5 @@ export async function PUT(
 
   const resBody = JSON.stringify(merged)
   await log(req, action, "success", store.userId, rawBody, resBody)
-  return NextResponse.json(merged, { headers: rateLimitHeaders(rl) })
+  return json(merged, { headers: rateLimitHeaders(rl) })
 }

@@ -1,11 +1,9 @@
 import { DashboardSidebar, MobileNav } from "@/components/shared/dashboard-sidebar"
 import { DashboardHeader } from "@/components/shared/dashboard-header"
-import { ProgressBar } from "@/components/shared/progress-bar"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
-      <ProgressBar />
       <DashboardSidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <DashboardHeader />
