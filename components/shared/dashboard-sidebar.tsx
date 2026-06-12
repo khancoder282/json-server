@@ -9,7 +9,6 @@ import {
   Database,
   FlaskConical,
   Key,
-  LayoutDashboard,
   ScrollText,
   Settings,
 } from "lucide-react"
@@ -21,7 +20,6 @@ interface NavEntry {
 }
 
 const nav: NavEntry[] = [
-  { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { label: "JSON Management", href: "/dashboard/json", icon: Database },
   { label: "Key Management", href: "/dashboard/keys", icon: Key },
   { label: "Playground", href: "/dashboard/playground", icon: FlaskConical },
@@ -108,11 +106,10 @@ export function DashboardSidebar() {
 const mobileNav: NavEntry[] = [...nav, settingsItem]
 
 const mobileLabel: Record<string, string> = {
-  Overview: "Home",
   "JSON Management": "JSON",
   "Key Management": "Keys",
-  "Log Management": "Logs",
   Playground: "Play",
+  "Log Management": "Logs",
   Settings: "Settings",
 }
 

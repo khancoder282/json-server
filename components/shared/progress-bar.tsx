@@ -1,29 +1,28 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
-import { usePathname } from "next/navigation"
+import { useEffect, useRef, useState, Suspense } from "react"
+import { usePathname, useSearchParams } from "next/navigation"
 
 const COLOR = "oklch(0.852 0.199 91.936)"
 
-export function ProgressBar() {
+function ProgressBarInner() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const navKey = pathname + searchParams.toString()
   const [width, setWidth] = useState(0)
   const [opacity, setOpacity] = useState(0)
   const startTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const crawlTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeRef = useRef(false)
 
-  // Detect navigation start by patching history methods.
+  // Detect navigation start by patching pushState only.
+  // replaceState is used internally by Next.js and must not be intercepted.
   useEffect(() => {
     const origPush = history.pushState.bind(history)
-    const origReplace = history.replaceState.bind(history)
 
-    function onNavigationStart() {
-      // Cancel any in-progress bar
+    history.pushState = (...args) => {
       if (startTimerRef.current) clearTimeout(startTimerRef.current)
       if (crawlTimerRef.current) clearTimeout(crawlTimerRef.current)
-
       activeRef.current = false
-
       // Only show bar after 150 ms — instant cached navigations never reach this
       startTimerRef.current = setTimeout(() => {
         activeRef.current = true
@@ -32,24 +31,15 @@ export function ProgressBar() {
         crawlTimerRef.current = setTimeout(() => setWidth(60), 400)
         crawlTimerRef.current = setTimeout(() => setWidth(80), 1200)
       }, 150)
-    }
-
-    history.pushState = (...args) => {
-      onNavigationStart()
       return origPush(...args)
-    }
-    history.replaceState = (...args) => {
-      onNavigationStart()
-      return origReplace(...args)
     }
 
     return () => {
       history.pushState = origPush
-      history.replaceState = origReplace
     }
   }, [])
 
-  // Detect navigation complete via pathname change.
+  // Detect navigation complete via pathname + search params change.
   useEffect(() => {
     if (startTimerRef.current) {
       clearTimeout(startTimerRef.current)
@@ -70,7 +60,7 @@ export function ProgressBar() {
     }, 200)
 
     return () => clearTimeout(hide)
-  }, [pathname])
+  }, [navKey])
 
   return (
     <div
@@ -89,5 +79,13 @@ export function ProgressBar() {
         transition: "width 0.3s ease, opacity 0.3s ease",
       }}
     />
+  )
+}
+
+export function ProgressBar() {
+  return (
+    <Suspense>
+      <ProgressBarInner />
+    </Suspense>
   )
 }
