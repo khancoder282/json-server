@@ -160,6 +160,35 @@ async function main() {
       ].join("\n")
     )
 
+    // Convenience scripts, committed so `git reset --hard` keeps them.
+    // A local `.env` (untracked) survives the reset.
+    await Bun.write(
+      join(stage, "start.sh"),
+      [
+        "#!/usr/bin/env sh",
+        "# First-time start: launch under PM2 and persist the process list.",
+        "set -e",
+        "pm2 start ecosystem.config.cjs",
+        "pm2 save",
+        "",
+      ].join("\n")
+    )
+    await Bun.write(
+      join(stage, "update.sh"),
+      [
+        "#!/usr/bin/env sh",
+        "# Pull the latest deploy snapshot and restart PM2.",
+        "# Each deploy is force-pushed, so reset to the remote (never git pull).",
+        "set -e",
+        "git fetch origin",
+        `git reset --hard origin/${branch}`,
+        "pm2 restart ecosystem.config.cjs",
+        "pm2 save",
+        "",
+      ].join("\n")
+    )
+    await $`chmod +x ${join(stage, "start.sh")} ${join(stage, "update.sh")}`
+
     const sha = (await $`git rev-parse --short HEAD`.text()).trim()
     const date = new Date().toISOString()
     await Bun.write(
@@ -182,8 +211,7 @@ async function main() {
         "Run with PM2 (requires `bun` in PATH on the server):",
         "",
         "```sh",
-        "pm2 start ecosystem.config.cjs   # starts web server + weekly cron",
-        "pm2 save",
+        "./start.sh        # pm2 start ecosystem.config.cjs && pm2 save",
         "```",
         "",
         ...(hasCron
@@ -191,13 +219,20 @@ async function main() {
           : []),
         "## Updating",
         "",
-        "Each deploy is a fresh force-pushed snapshot, so `git pull` will report",
-        "diverged branches. Reset to the remote instead, then reload PM2:",
+        "Each deploy is a fresh force-pushed snapshot, so `git pull` reports",
+        "diverged branches. Use the bundled script (resets to the remote, then",
+        "restarts PM2 — your untracked `.env` is preserved):",
+        "",
+        "```sh",
+        "./update.sh",
+        "```",
+        "",
+        "It runs:",
         "",
         "```sh",
         "git fetch origin",
         `git reset --hard origin/${branch}`,
-        "pm2 reload ecosystem.config.cjs",
+        "pm2 restart ecosystem.config.cjs",
         "```",
         "",
       ].join("\n")
