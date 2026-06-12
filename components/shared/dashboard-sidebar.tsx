@@ -24,8 +24,8 @@ const nav: NavEntry[] = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { label: "JSON Management", href: "/dashboard/json", icon: Database },
   { label: "Key Management", href: "/dashboard/keys", icon: Key },
-  { label: "Log Management", href: "/dashboard/logs", icon: ScrollText },
   { label: "Playground", href: "/dashboard/playground", icon: FlaskConical },
+  { label: "Log Management", href: "/dashboard/logs", icon: ScrollText },
 ]
 
 // Pinned to the bottom of the menu, separate from the main group.

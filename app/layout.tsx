@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Geist_Mono, Inter } from "next/font/google"
 import { SessionProvider } from "next-auth/react"
-import NextTopLoader from "nextjs-toploader"
+import { ProgressBar } from "@/components/shared/progress-bar"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ThemeScript } from "@/components/theme-script"
@@ -37,13 +37,7 @@ export default async function RootLayout({
         <ThemeScript />
       </head>
       <body>
-        <NextTopLoader
-          color="oklch(0.852 0.199 91.936)"
-          height={3}
-          showSpinner={false}
-          easing="ease"
-          speed={300}
-        />
+        <ProgressBar />
         <SessionProvider session={session}>
           <ThemeProvider>
               {children}

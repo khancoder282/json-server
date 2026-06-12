@@ -37,21 +37,44 @@ async function log(
   })
 }
 
+type StoreResult = {
+  id: string
+  name: string
+  isPublic: boolean
+  userId: string
+  updatedAt: Date
+  buildPayload: () => { ok: true; data: unknown } | { ok: false }
+}
+
+async function fetchStore(id: string, path: string | null): Promise<StoreResult | null> {
+  const [row] = await db
+    .select()
+    .from(jsonStores)
+    .where(eq(jsonStores.id, id))
+    .limit(1)
+
+  if (!row) return null
+
+  return {
+    ...row,
+    buildPayload: () => {
+      const content = JSON.parse(row.content)
+      if (!path) return { ok: true, data: content }
+      const result = selectByPath(content, path)
+      return result.found ? { ok: true, data: result.value } : { ok: false }
+    },
+  }
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  // Optional path selector, e.g. ?path=user[0].role.name — returns just that
-  // nested value from the JSON content instead of the whole object.
   const path = new URL(req.url).searchParams.get("path")
   const action = `GET /api/json/${id}${path ? `?path=${path}` : ""}`
 
-  const [store] = await db
-    .select()
-    .from(jsonStores)
-    .where(eq(jsonStores.id, id))
-    .limit(1)
+  const store = await fetchStore(id, path)
 
   if (!store) {
     const body = JSON.stringify({ error: "Not found" })
@@ -59,14 +82,7 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 })
   }
 
-  // Build the response payload from content, applying the path selector if any.
-  // Returns null when the path resolves to nothing (caller responds 404).
-  function buildPayload(): { ok: true; data: unknown } | { ok: false } {
-    const content = JSON.parse(store.content)
-    if (!path) return { ok: true, data: content }
-    const selected = selectByPath(content, path)
-    return selected.found ? { ok: true, data: selected.value } : { ok: false }
-  }
+  const { buildPayload } = store
 
   if (!store.isPublic) {
     const authHeader = req.headers.get("authorization")

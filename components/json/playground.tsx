@@ -34,12 +34,26 @@ const MonacoJsonEditor = dynamic(
     ),
   { ssr: false, loading: () => <EditorSkeleton /> }
 )
+import { PlaygroundTourTrigger } from "@/components/json/playground-tour"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { cn, formatSize } from "@/lib/utils"
 import { Check, Loader2, Send } from "lucide-react"
+
+function validatePath(path: string): string | null {
+  if (!path) return null
+  const opens = (path.match(/\[/g) ?? []).length
+  const closes = (path.match(/\]/g) ?? []).length
+  if (opens !== closes) return "Unmatched bracket — every [ must have a closing ]"
+  const badIndex = path.match(/\[([^\]]*[^\d\]][^\]]*)\]/)
+  if (badIndex) return `Index must be a number, got [${badIndex[1]}]`
+  if (path.startsWith(".")) return "Path cannot start with '.'"
+  if (path.endsWith(".")) return "Path cannot end with '.'"
+  if (/\.{2,}/.test(path)) return "Consecutive dots are not allowed"
+  return null
+}
 
 interface StoreOption {
   id: string
@@ -106,6 +120,7 @@ export function Playground({ store, apiKeys, stores }: Props) {
   const [apiKey, setApiKey] = useState("")
   const [keyChosen, setKeyChosen] = useState(false)
   const [path, setPath] = useState("")
+  const [pathError, setPathError] = useState<string | null>(null)
   const [putBody, setPutBody] = useState("{\n  \n}")
   const [serverContent, setServerContent] = useState(() =>
     store ? pretty(JSON.parse(store.content)) : ""
@@ -235,6 +250,7 @@ export function Playground({ store, apiKeys, stores }: Props) {
       {/* ── LEFT: output ──────────────────────────────── */}
       {ready ? (
         <Tabs
+          data-tour="output-panel"
           value={outputTab}
           onValueChange={(v) => setOutputTab(v as "response" | "current")}
           className="h-fit"
@@ -337,7 +353,10 @@ export function Playground({ store, apiKeys, stores }: Props) {
           </TabsContent>
         </Tabs>
       ) : (
-        <div className="flex items-center justify-center rounded-lg border py-12 text-center text-sm text-muted-foreground">
+        <div
+          data-tour="output-panel"
+          className="flex items-center justify-center rounded-lg border py-12 text-center text-sm text-muted-foreground"
+        >
           {!store
             ? "Select a JSON store to begin."
             : "Choose an API key to start sending requests."}
@@ -346,9 +365,14 @@ export function Playground({ store, apiKeys, stores }: Props) {
 
       {/* ── RIGHT: store + key, then the request builder ── */}
       <div className="space-y-4">
+        {ready && (
+          <div className="flex justify-end">
+            <PlaygroundTourTrigger />
+          </div>
+        )}
         <div className="space-y-4 rounded-lg border p-4">
           {/* JSON store + size */}
-          <div className="grid gap-1.5">
+          <div data-tour="store-selector" className="grid gap-1.5">
             <Label>JSON store</Label>
             <StoreCombobox
               stores={stores}
@@ -372,7 +396,7 @@ export function Playground({ store, apiKeys, stores }: Props) {
           </div>
 
           {/* API key */}
-          <div className="grid gap-1.5">
+          <div data-tour="api-key-selector" className="grid gap-1.5">
             <Label htmlFor="pg-key">API key</Label>
             {!store ? (
               <p className="text-sm text-muted-foreground">
@@ -413,7 +437,7 @@ export function Playground({ store, apiKeys, stores }: Props) {
         </div>
 
         {ready && (
-          <Tabs defaultValue="get">
+          <Tabs data-tour="request-builder" defaultValue="get">
             <TabsList className="w-full md:w-fit">
               <TabsTrigger value="get">GET</TabsTrigger>
               <TabsTrigger value="put">PUT</TabsTrigger>
@@ -429,20 +453,35 @@ export function Playground({ store, apiKeys, stores }: Props) {
                 <Input
                   id="pg-path"
                   value={path}
-                  onChange={(e) => setPath(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setPath(v)
+                    setPathError(validatePath(v))
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault()
-                      sendGet()
+                      if (!pathError) sendGet()
                     }
                   }}
-                  placeholder="eq.user[0].role"
-                  className="font-mono"
+                  placeholder="user[0].role"
+                  className={cn(
+                    "font-mono",
+                    pathError && "border-destructive focus-visible:ring-destructive"
+                  )}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Returns just that nested value. Leave empty for the whole
-                  object.
-                </p>
+                {pathError ? (
+                  <p className="text-xs text-destructive">{pathError}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    e.g.{" "}
+                    <code className="font-mono">user.name</code>
+                    {" · "}
+                    <code className="font-mono">items[0].title</code>
+                    {" · "}
+                    <code className="font-mono">config.db.host</code>
+                  </p>
+                )}
               </div>
               <code className="block overflow-x-auto rounded-md bg-muted px-3 py-2 font-mono text-xs">
                 GET {getUrl}
@@ -450,7 +489,7 @@ export function Playground({ store, apiKeys, stores }: Props) {
               <div className="flex justify-end">
                 <Button
                   onClick={sendGet}
-                  disabled={loading}
+                  disabled={loading || !!pathError}
                   className="w-full md:w-fit"
                 >
                   {loading ? (
