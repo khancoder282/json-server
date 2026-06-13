@@ -1,0 +1,142 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "JSON Server API",
+    "version": "1.0.0",
+    "description": "Store and serve JSON documents over a tiny REST API. Public stores can be read without authentication; private stores and every write require a Bearer API key (format `json-server-xxxx`) that is linked to the store with the matching permission (`get` and/or `put`). CORS is enabled, so browser-based agents can call it cross-origin.",
+    "contact": { "url": "https://json-server.denmobi.vn" }
+  },
+  "servers": [{ "url": "https://json-server.denmobi.vn" }],
+  "paths": {
+    "/api/json/{id}": {
+      "get": {
+        "operationId": "getJsonStore",
+        "summary": "Read a JSON store (optionally a nested value)",
+        "description": "Returns the store's JSON content. Public stores need no auth; private stores require a Bearer key with `get` permission linked to the store. Use `path` to return only a nested value.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The JSON store id (UUID).",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": false,
+            "description": "Dot/bracket selector to return just a nested value, e.g. `user[0].role.name` or `users.Thanh Khan`. Omit to get the whole document.",
+            "schema": { "type": "string" },
+            "example": "user[0].role.name"
+          }
+        ],
+        "security": [{ "bearerAuth": [] }, {}],
+        "responses": {
+          "200": {
+            "description": "The stored JSON content, or the selected value when `path` is supplied.",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "examples": {
+                  "wholeDocument": { "value": { "user": [{ "role": { "name": "admin" } }], "count": 2 } },
+                  "selectedValue": { "value": "admin" }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      },
+      "put": {
+        "operationId": "updateJsonStore",
+        "summary": "Deep-merge JSON into a store",
+        "description": "Recursively merges the request body into the stored content: nested objects merge key by key, while arrays and primitive values are replaced. Requires a Bearer key with `put` permission linked to the store. Returns the merged document.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The JSON store id (UUID).",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "description": "Partial JSON to deep-merge into the existing content." },
+              "example": { "count": 2, "meta": { "updatedBy": "agent" } }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The merged JSON document.",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "400": {
+            "description": "The request body was not valid JSON.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" }, "example": { "error": "Invalid JSON body" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key in the format `json-server-xxxxxxxxxxxxxxxx`. Create one in the dashboard, link it to the target store, and grant `get` and/or `put`. Send it as `Authorization: Bearer <key>`."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": { "error": { "type": "string" } },
+        "required": ["error"]
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing/invalid key, key lacks the required permission, key isn't linked to the store, or the key is locked.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "examples": {
+              "unauthorized": { "value": { "error": "Unauthorized" } },
+              "locked": { "value": { "error": "API key is locked" } }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The store does not exist, or the `path` selector did not resolve.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "examples": {
+              "notFound": { "value": { "error": "Not found" } },
+              "pathNotFound": { "value": { "error": "Path not found: user[9].role" } }
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Rate limit exceeded — max 100 requests per minute per API key (private stores).",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": "Rate limit exceeded. Max 100 requests per minute per API key." }
+          }
+        }
+      }
+    }
+  }
+}

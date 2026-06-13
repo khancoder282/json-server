@@ -1,0 +1,60 @@
+# JSON Server
+
+> A tiny REST API to store and serve JSON documents. Public stores are read without authentication; private stores and every write require a Bearer API key that is linked to the store with the matching permission.
+
+- Base URL: https://json-server.denmobi.vn
+- Machine-readable spec (OpenAPI 3.1): https://json-server.denmobi.vn/openapi.json
+- CORS is enabled (browser agents can call cross-origin).
+
+## Authentication
+
+Send the key as an HTTP header:
+
+    Authorization: Bearer json-server-xxxxxxxxxxxxxxxx
+
+Keys are created in the dashboard, linked to specific stores, and granted `get` and/or `put`. A public store can be read with no key; a private store and ALL writes need a valid, linked key with the right permission.
+
+## Endpoints
+
+### GET /api/json/{id} — read a store
+
+Returns the store's JSON content.
+
+- `{id}` is the store's UUID.
+- Optional query `path` returns only a nested value using dot/bracket notation:
+  `?path=user[0].role.name` → `"admin"`. A numeric index on an object (e.g. `users[1]`) selects the Nth value. Omit `path` to get the whole document.
+
+Examples:
+
+    # public store
+    curl https://json-server.denmobi.vn/api/json/<id>
+
+    # private store + nested value
+    curl -H "Authorization: Bearer json-server-xxxx" \
+      "https://json-server.denmobi.vn/api/json/<id>?path=user[0].role.name"
+
+Responses: `200` the JSON (or selected value) · `401` unauthorized/locked key · `404` store or path not found · `429` rate limited.
+
+### PUT /api/json/{id} — deep-merge into a store
+
+Recursively merges the JSON body into the stored content: nested objects merge key by key; arrays and primitives are replaced. Requires a key with `put` permission. Returns the merged document.
+
+Example:
+
+    curl -X PUT \
+      -H "Authorization: Bearer json-server-xxxx" \
+      -H "Content-Type: application/json" \
+      -d '{"count": 2, "meta": {"updatedBy": "agent"}}' \
+      https://json-server.denmobi.vn/api/json/<id>
+
+Responses: `200` merged content · `400` invalid JSON body · `401` unauthorized/locked key · `404` not found · `429` rate limited.
+
+## Conventions
+
+- All responses are JSON. Errors look like `{"error": "..."}`.
+- Rate limit: 100 requests per minute per API key (private stores).
+- There are only these two data endpoints; there is no list/create-over-API — stores and keys are managed in the dashboard at https://json-server.denmobi.vn.
+
+## For tool/function-calling agents
+
+Import the OpenAPI document at https://json-server.denmobi.vn/openapi.json. It defines two operations: `getJsonStore` (GET) and `updateJsonStore` (PUT), plus the `bearerAuth` security scheme.

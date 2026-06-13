@@ -1,0 +1,65 @@
+{
+  "node": {
+    "00adcd839e433a4c4d198ddf21f61fae781a7cd825": {
+      "workers": {
+        "app/(dashboard)/dashboard/settings/profile/page": {
+          "moduleId": 4605,
+          "async": true,
+          "exportedName": "signOutAction",
+          "filename": "lib/actions/auth.ts"
+        }
+      },
+      "exportedName": "signOutAction",
+      "filename": "lib/actions/auth.ts"
+    },
+    "4053c5c6ce2667c85f9b2a0b5e66c327ba2996391a": {
+      "workers": {
+        "app/(dashboard)/dashboard/settings/profile/page": {
+          "moduleId": 4605,
+          "async": true,
+          "exportedName": "getUserByEmail",
+          "filename": "lib/data/users.ts"
+        }
+      },
+      "exportedName": "getUserByEmail",
+      "filename": "lib/data/users.ts"
+    },
+    "40da8460178447ffa33977eba9139adeae9b0ca831": {
+      "workers": {
+        "app/(dashboard)/dashboard/settings/profile/page": {
+          "moduleId": 4605,
+          "async": true,
+          "exportedName": "getVerificationToken",
+          "filename": "lib/data/users.ts"
+        }
+      },
+      "exportedName": "getVerificationToken",
+      "filename": "lib/data/users.ts"
+    },
+    "40ee9b251842a1d03e839858a715aa5cd2f5bf831a": {
+      "workers": {
+        "app/(dashboard)/dashboard/settings/profile/page": {
+          "moduleId": 4605,
+          "async": true,
+          "exportedName": "getUserById",
+          "filename": "lib/data/users.ts"
+        }
+      },
+      "exportedName": "getUserById",
+      "filename": "lib/data/users.ts"
+    },
+    "40c0533e6aeb6747ccba7675cad96433acdcfd7e24": {
+      "workers": {
+        "app/(dashboard)/dashboard/settings/profile/page": {
+          "moduleId": 4605,
+          "async": true,
+          "exportedName": "updateProfileAction",
+          "filename": "lib/actions/profile.ts"
+        }
+      },
+      "exportedName": "updateProfileAction",
+      "filename": "lib/actions/profile.ts"
+    }
+  },
+  "edge": {}
+}

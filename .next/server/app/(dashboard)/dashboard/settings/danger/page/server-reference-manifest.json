@@ -1,0 +1,29 @@
+{
+  "node": {
+    "00adcd839e433a4c4d198ddf21f61fae781a7cd825": {
+      "workers": {
+        "app/(dashboard)/dashboard/settings/danger/page": {
+          "moduleId": 63307,
+          "async": true,
+          "exportedName": "signOutAction",
+          "filename": "lib/actions/auth.ts"
+        }
+      },
+      "exportedName": "signOutAction",
+      "filename": "lib/actions/auth.ts"
+    },
+    "002e9661461d95515af2bb54f8b86e990969b1e6d0": {
+      "workers": {
+        "app/(dashboard)/dashboard/settings/danger/page": {
+          "moduleId": 63307,
+          "async": true,
+          "exportedName": "deleteAccountAction",
+          "filename": "lib/actions/profile.ts"
+        }
+      },
+      "exportedName": "deleteAccountAction",
+      "filename": "lib/actions/profile.ts"
+    }
+  },
+  "edge": {}
+}

@@ -1,0 +1,3 @@
+module.exports=[2668,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(5050);let e=(0,d.createServerReference)("002e9661461d95515af2bb54f8b86e990969b1e6d0",d.callServer,void 0,d.findSourceMapURL,"deleteAccountAction");var f=a.i(2248),g=a.i(40695);a.s(["DeleteAccount",0,function(){let[a,d]=(0,c.useTransition)();return(0,b.jsx)(f.ConfirmDialog,{trigger:(0,b.jsx)(g.Button,{variant:"destructive",disabled:a,children:"Delete account"}),title:"Delete account",description:"This will permanently delete your account, all JSON stores, API keys, and logs. This action cannot be undone.",onConfirm:function(){d(async()=>{await e()})},loading:a})}],2668)}];
+
+//# sourceMappingURL=components_shared_delete-account_tsx_13rh8ne._.js.map

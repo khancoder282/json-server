@@ -1,0 +1,41 @@
+{
+  "node": {
+    "00adcd839e433a4c4d198ddf21f61fae781a7cd825": {
+      "workers": {
+        "app/(dashboard)/dashboard/json/new/page": {
+          "moduleId": 64055,
+          "async": true,
+          "exportedName": "signOutAction",
+          "filename": "lib/actions/auth.ts"
+        }
+      },
+      "exportedName": "signOutAction",
+      "filename": "lib/actions/auth.ts"
+    },
+    "40090391ab0508f5cca6538f3ff4c83d8b8f5b09b3": {
+      "workers": {
+        "app/(dashboard)/dashboard/json/new/page": {
+          "moduleId": 64055,
+          "async": true,
+          "exportedName": "createJsonStoreAction",
+          "filename": "lib/actions/json-stores.ts"
+        }
+      },
+      "exportedName": "createJsonStoreAction",
+      "filename": "lib/actions/json-stores.ts"
+    },
+    "6064798b8c5a9283378beba8c2733146d2e23ad603": {
+      "workers": {
+        "app/(dashboard)/dashboard/json/new/page": {
+          "moduleId": 64055,
+          "async": true,
+          "exportedName": "updateJsonStoreAction",
+          "filename": "lib/actions/json-stores.ts"
+        }
+      },
+      "exportedName": "updateJsonStoreAction",
+      "filename": "lib/actions/json-stores.ts"
+    }
+  },
+  "edge": {}
+}

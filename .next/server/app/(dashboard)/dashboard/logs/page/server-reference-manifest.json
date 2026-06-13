@@ -1,0 +1,65 @@
+{
+  "node": {
+    "00adcd839e433a4c4d198ddf21f61fae781a7cd825": {
+      "workers": {
+        "app/(dashboard)/dashboard/logs/page": {
+          "moduleId": 281,
+          "async": true,
+          "exportedName": "signOutAction",
+          "filename": "lib/actions/auth.ts"
+        }
+      },
+      "exportedName": "signOutAction",
+      "filename": "lib/actions/auth.ts"
+    },
+    "40960714d06bb4cb88c615e29d17fdd14fbb89e8ae": {
+      "workers": {
+        "app/(dashboard)/dashboard/logs/page": {
+          "moduleId": 281,
+          "async": true,
+          "exportedName": "insertLog",
+          "filename": "lib/data/logs.ts"
+        }
+      },
+      "exportedName": "insertLog",
+      "filename": "lib/data/logs.ts"
+    },
+    "40aa4c35ca935b532af14bd41823a527a553db42be": {
+      "workers": {
+        "app/(dashboard)/dashboard/logs/page": {
+          "moduleId": 281,
+          "async": true,
+          "exportedName": "countLogsByUser",
+          "filename": "lib/data/logs.ts"
+        }
+      },
+      "exportedName": "countLogsByUser",
+      "filename": "lib/data/logs.ts"
+    },
+    "607fecefd16fab7ba8f30ce0757582879fc7d9323e": {
+      "workers": {
+        "app/(dashboard)/dashboard/logs/page": {
+          "moduleId": 281,
+          "async": true,
+          "exportedName": "getLogsByUser",
+          "filename": "lib/data/logs.ts"
+        }
+      },
+      "exportedName": "getLogsByUser",
+      "filename": "lib/data/logs.ts"
+    },
+    "00754f55038bbd44fddfad25c3be026c8d34c406e3": {
+      "workers": {
+        "app/(dashboard)/dashboard/logs/page": {
+          "moduleId": 281,
+          "async": true,
+          "exportedName": "clearAllLogsAction",
+          "filename": "lib/actions/logs.ts"
+        }
+      },
+      "exportedName": "clearAllLogsAction",
+      "filename": "lib/actions/logs.ts"
+    }
+  },
+  "edge": {}
+}

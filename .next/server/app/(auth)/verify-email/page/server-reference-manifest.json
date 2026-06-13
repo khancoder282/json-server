@@ -1,0 +1,29 @@
+{
+  "node": {
+    "40f3deaee14e4a0c7cd7070fa86663bce2f20b4d4a": {
+      "workers": {
+        "app/(auth)/verify-email/page": {
+          "moduleId": 59691,
+          "async": true,
+          "exportedName": "verifyEmailAction",
+          "filename": "lib/actions/auth.ts"
+        }
+      },
+      "exportedName": "verifyEmailAction",
+      "filename": "lib/actions/auth.ts"
+    },
+    "40b31e2a8c2d50630514e9e91a1be58a810ca9134d": {
+      "workers": {
+        "app/(auth)/verify-email/page": {
+          "moduleId": 59691,
+          "async": true,
+          "exportedName": "resendVerificationAction",
+          "filename": "lib/actions/auth.ts"
+        }
+      },
+      "exportedName": "resendVerificationAction",
+      "filename": "lib/actions/auth.ts"
+    }
+  },
+  "edge": {}
+}
